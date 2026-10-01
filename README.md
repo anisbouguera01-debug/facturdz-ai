@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FacturDZ AI
 
-## Getting Started
+Le logiciel de facturation intelligent pour les entreprises algériennes : clients, produits,
+devis, factures, PDF, paiements, tableau de bord et assistant IA (OpenAI / Gemini), en SaaS
+multi-entreprise.
 
-First, run the development server:
+> **État : Phase 1 terminée** (initialisation et fondations). Voir [Feuille de route](#feuille-de-route).
+
+## Stack
+
+| Couche      | Choix                                                       |
+| ----------- | ----------------------------------------------------------- |
+| Application | Next.js 16 (App Router), React 19, TypeScript strict        |
+| UI          | Tailwind CSS 4, composants shadcn/ui, police Geist          |
+| Base        | PostgreSQL 16, Prisma 7 _(Phase 2)_                         |
+| Auth        | Better Auth, sessions en base _(Phase 3)_                   |
+| Validation  | Zod 4, React Hook Form                                      |
+| PDF         | @react-pdf/renderer côté serveur _(Phase 10)_               |
+| IA          | Abstraction `AIProvider` → OpenAI / Gemini _(Phases 12–15)_ |
+| Logs        | pino, masquage automatique des secrets                      |
+| Tests       | Vitest (unitaires + intégration), Playwright (e2e)          |
+
+## Démarrage local
+
+Prérequis : Node.js ≥ 22, pnpm 10, PostgreSQL 16.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local      # puis renseigner AUTH_SECRET (openssl rand -base64 32)
+pnpm dev                        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Base de données, migrations et seed : documentés en Phase 2.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Commande         | Rôle                                                  |
+| ---------------- | ----------------------------------------------------- |
+| `pnpm dev`       | Serveur de développement                              |
+| `pnpm build`     | Build de production                                   |
+| `pnpm typecheck` | Génération des types de routes + `tsc`                |
+| `pnpm lint`      | ESLint (inclut les règles d'architecture)             |
+| `pnpm test`      | Tests Vitest                                          |
+| `pnpm check`     | typecheck + lint + tests (à lancer avant tout commit) |
+| `pnpm format`    | Prettier                                              |
 
-## Learn More
+## Variables d'environnement
 
-To learn more about Next.js, take a look at the following resources:
+Voir [`.env.example`](.env.example). Règles :
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Les secrets (`AUTH_SECRET`, `DATABASE_URL`, clés IA) ne sont **jamais** préfixés `NEXT_PUBLIC_`.
+- Ils ne sont lus que dans `src/server/env.ts`, validés par Zod ; le lint refuse tout `process.env` ailleurs.
+- Chaque environnement (développement, staging, production) a ses propres valeurs dans l'hébergeur.
+- `.env*` est ignoré par Git, sauf `.env.example`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Architecture
 
-## Deploy on Vercel
+Résumé ci-dessous, détails dans [`docs/architecture.md`](docs/architecture.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├─ app/                 routes (marketing, auth, app, admin, api)
+├─ server/              code serveur uniquement (`server-only`)
+│  ├─ env.ts            variables d'environnement validées
+│  ├─ errors.ts         AppError, erreurs publiques, safeAction
+│  ├─ logger.ts         pino + masquage des secrets
+│  ├─ auth/ tenant/     session, contexte d'organisation, permissions
+│  ├─ db/               client Prisma + repositories tenant-scopés
+│  ├─ services/         logique métier (calculs, numérotation, audit)
+│  ├─ ai/               providers, outils, schémas, prompts, usage
+│  ├─ pdf/ plans/ security/
+├─ components/          ui/, forms/, layout/
+└─ lib/                 utilitaires partagés client/serveur
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`](docs/security.md).
+
+## Feuille de route
+
+| Phase | Contenu                                                       | État    |
+| ----- | ------------------------------------------------------------- | ------- |
+| 1     | Architecture + initialisation                                 | ✅      |
+| 2     | PostgreSQL + Prisma                                           | à faire |
+| 3     | Authentification                                              | à faire |
+| 4     | Multi-tenancy                                                 | à faire |
+| 5–11  | Clients, produits, devis, factures, paiements, PDF, dashboard | à faire |
+| 12–15 | FacturDZ AI, OpenAI, Gemini, usage et coûts IA                | à faire |
+| 16–21 | Plans, admin, sécurité, tests, landing, production            | à faire |
