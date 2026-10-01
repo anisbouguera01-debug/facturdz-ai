@@ -107,3 +107,11 @@ directement (en-tête `Next-Action`, sans passer par l'interface) sur le build d
   ni de donnée client.
 - La saisie des tarifs passe par une commande d'exploitation (accès base requis), pas par une
   route web ; le panneau d'administration (Phase 17) devra la protéger par un rôle plateforme.
+
+## Limites et abus (Phase 16)
+
+- Les plafonds sont appliqués côté serveur, dans les services (jamais seulement dans l'interface) et
+  dans la transaction qui crée la pièce, avec verrou : contournement par requêtes simultanées impossible
+  pour les factures et devis.
+- Les quotas IA bloquent avant tout appel payant au fournisseur ; les refus sont journalisés.
+- Une entreprise sans abonnement échappe aux limites : à surveiller (vérification prévue en Phase 17).

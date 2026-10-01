@@ -13,6 +13,7 @@ import { AppError } from "@/server/errors";
 import { assertPermission, type TenantContext } from "@/server/tenant/resolve";
 import { recordAudit } from "./audit";
 import { prepareLines } from "./document-lines";
+import { assertWithinLimit, lockOrganization } from "./limits";
 import { allocateNumber } from "./numbering";
 
 /**
@@ -62,6 +63,9 @@ export async function createQuote(ctx: Ctx, input: QuoteInput) {
   const { rows, totals } = await prepareLines(ctx.db, data.items);
 
   const quote = await ctx.db.$transaction(async (tx) => {
+    // Limite du plan : verrou sur l'entreprise puis comptage, dans la même transaction.
+    await lockOrganization(tx, ctx.organizationId);
+    await assertWithinLimit(tx, "QUOTES_PER_MONTH");
     const q = await tx.quote.create({
       data: {
         organizationId: ctx.organizationId,

@@ -278,3 +278,25 @@ serveur (`prepareLines`), l'éditeur (aperçu), les aperçus IA et le PDF (valeu
 recalcul). Garanties : tests `tests/unit/billing-rounding.test.ts` et contraintes CHECK
 `total = subtotal + taxAmount/taxTotal` sur lignes et documents (migration `…_totals_consistency`).
 **Ne pas modifier cette règle sans validation explicite.**
+
+## Plans et limites (Phase 16)
+
+Valeurs en base (`subscription_plans`, `usage_limits` : une ligne par limite, `value = null` ou ligne
+absente = illimité) ; **rien n'est codé en dur** (les valeurs du seed reprennent l'exemple du cahier des
+charges et se modifient en base). Service : `src/server/services/limits.ts`.
+
+- **Période** : mois calendaire en heure d'Alger.
+- **Factures** : comptées à l'ÉMISSION (numéro attribué, annulées comprises) ; les brouillons sont
+  libres. **Devis** : comptés à la création. Les deux contrôles sont faits **dans la transaction,
+  après un verrou de ligne sur l'entreprise** : des émissions simultanées ne dépassent jamais le
+  plafond (testé : 7 en parallèle, plafond 3 → exactement 3, numéros 1-2-3 sans trou).
+- **IA** : requêtes, jetons et budget USD mensuels, vérifiés avant l'appel au fournisseur ; un refus est
+  tracé (`REJECTED_LIMIT`, `LIMIT_EXCEEDED`), n'appelle pas le fournisseur et ne compte pas dans le
+  quota. Contrôle « souple » (de rares appels simultanés peuvent dépasser de quelques unités).
+- **Abonnement résilié** (`CANCELLED`) : émission, création de devis et IA refusées ; consultation, PDF
+  et paiements restent possibles. `TRIALING` et `PAST_DUE` restent actifs (politique à valider).
+- **Non appliqué pour l'instant** : `STORAGE_MB` (aucun stockage de fichiers) ; `MEMBERS` (prêt via
+  `assertWithinLimit`, aucune fonction d'ajout de membre n'existe encore) ; entreprise sans abonnement
+  (anomalie) = aucune limite + alerte dans les logs.
+- **Page** `/settings/subscription` (propriétaire, administrateur) : plan, statut, usage et plafonds.
+  Le changement de plan se fera depuis l'administration (Phase 17), sans paiement en ligne.

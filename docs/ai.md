@@ -138,3 +138,9 @@ aucun outil d'écriture ou de suppression, aucun secret dans le contexte, donné
   d'appels sans tarif. Strictement limitée à l'entreprise ; aucun prompt ni réponse n'est stocké.
 - **Limite** : estimation indicative ; la facture du fournisseur fait foi. Les quotas par plan
   (blocage à l'atteinte d'une limite) arrivent en Phase 16.
+
+## Quotas par plan (Phase 16)
+
+`runAI` applique `AI_REQUESTS_PER_MONTH`, `AI_TOKENS_PER_MONTH` et `AI_BUDGET_USD_PER_MONTH` du plan avant
+l'appel au fournisseur (voir `docs/architecture.md`, « Plans et limites »). Le budget n'inclut que les appels
+dont le coût est estimable : sans tarif enregistré, il ne peut pas être appliqué.

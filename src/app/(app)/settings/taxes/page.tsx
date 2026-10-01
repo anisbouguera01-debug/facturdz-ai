@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { TaxRatesManager } from "@/components/forms/tax-rates-manager";
 import { Forbidden } from "@/components/layout/forbidden";
+import { SettingsTabs } from "@/components/layout/settings-tabs";
 import { can } from "@/lib/permissions";
 import { listTaxRates } from "@/server/services/tax-rates";
 import { requireTenantPage } from "@/server/tenant/context";
@@ -16,6 +17,7 @@ export default async function TaxSettingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8 sm:py-10">
+      <SettingsTabs current="/settings/taxes" />
       <p className="text-sm text-muted-foreground">Paramètres</p>
       <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Taux de TVA</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">

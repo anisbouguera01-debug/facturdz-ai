@@ -13,6 +13,7 @@ import { AppError } from "@/server/errors";
 import { assertPermission, type TenantContext } from "@/server/tenant/resolve";
 import { recordAudit } from "./audit";
 import { prepareLines } from "./document-lines";
+import { assertWithinLimit, lockOrganization } from "./limits";
 import { allocateNumber } from "./numbering";
 
 /**
@@ -176,6 +177,10 @@ export async function issueInvoice(ctx: Ctx, id: string) {
       },
     });
     if (!seller) throw new AppError("NOT_FOUND", "Entreprise introuvable.");
+
+    // Limite du plan : verrou sur l'entreprise puis comptage, dans la même transaction.
+    await lockOrganization(tx, ctx.organizationId);
+    await assertWithinLimit(tx, "INVOICES_PER_MONTH");
 
     const n = await allocateNumber(tx, ctx.organizationId, "INVOICE", dateToISO(invoice.issueDate));
     const res = await tx.invoice.updateMany({

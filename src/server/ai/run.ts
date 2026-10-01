@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { AppError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { consumeRateLimit } from "@/server/security/rate-limit";
+import { assertAiQuota } from "@/server/services/limits";
 import { assertPermission, type TenantContext } from "@/server/tenant/resolve";
 import { computeCost, findPricing } from "./cost";
 import { getProvider } from "./providers";
@@ -52,6 +53,18 @@ export async function runAI<R, T>(
     await ctx.db.aIUsage.create({
       data: { ...base, latencyMs: 0, status: "REJECTED_LIMIT", errorCode: "RATE_LIMITED" },
     });
+    throw error;
+  }
+
+  // Quotas du plan (requêtes, jetons, budget) : refus tracé, sans appel au fournisseur.
+  try {
+    await assertAiQuota(ctx.db);
+  } catch (error) {
+    if (error instanceof AppError && error.code === "LIMIT_EXCEEDED") {
+      await ctx.db.aIUsage.create({
+        data: { ...base, latencyMs: 0, status: "REJECTED_LIMIT", errorCode: "LIMIT_EXCEEDED" },
+      });
+    }
     throw error;
   }
 
