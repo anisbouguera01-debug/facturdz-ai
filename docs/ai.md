@@ -57,3 +57,28 @@ toujours présenté comme une estimation.
 
 Instructions système séparées des données, données utilisateur encadrées comme données,
 aucun outil d'écriture ou de suppression, aucun secret dans le contexte, données minimisées.
+
+## État d'implémentation (Phase 12)
+
+- **Fournisseur** : seul le fournisseur simulé (`AI_PROVIDER=mock`) existe. Il est déterministe,
+  sans réseau ni coût, et **refusé quand `APP_ENV=production`**. OpenAI (Phase 13) et Gemini
+  (Phase 14) s'ajoutent derrière la même interface `AIProvider`.
+- **Point d'entrée unique** : `runAI` (permission `ai:use` → limite de débit 20 requêtes/min
+  par utilisateur → appel → validation → `AIUsage`). Un `AIUsage` est écrit pour le succès,
+  l'erreur fournisseur, la sortie invalide et la limite atteinte ; le coût reste `null`
+  jusqu'à la Phase 15. Ni prompt ni réponse ne sont journalisés.
+- **Création de documents** (`ai-drafts.ts`) : le modèle ne reçoit que le texte de
+  l'utilisateur (encadré par `<demande_utilisateur>`), jamais de clients, produits ni montants.
+  Sa sortie JSON est validée par Zod (clés inconnues supprimées : `organizationId`, totaux,
+  statut sont ignorés) ; en cas d'invalidité, **une seule** correction est tentée. Client et
+  produits sont rapprochés côté serveur ; en cas d'ambiguïté, aucun client n'est présélectionné.
+  La proposition (`AIDraft`, 24 h, visible uniquement par son auteur) est prévisualisée avec des
+  montants **recalculés par le serveur**, puis confirmée explicitement : la confirmation est
+  atomique (une seule réussit), crée un **brouillon** de facture/devis (jamais émis) via les
+  services habituels, et l'émission reste une action humaine distincte.
+- **Assistant analytique** (`ai-assistant.ts`) : outils en lecture seule en liste blanche
+  (`period_figures`, `unpaid_customers`, `top_customers`, `overdue_invoices`), `organizationId`
+  injecté par le serveur, résultats plafonnés, droit `stats:read` requis. La réponse est
+  affichée avec les « données utilisées » pour vérification.
+- **Limites connues** : le fournisseur simulé ne comprend que des formulations simples ; si le
+  client demandé n'existe pas, il faut le créer puis refaire la demande.

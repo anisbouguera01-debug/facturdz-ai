@@ -35,6 +35,13 @@ describe("parseServerEnv", () => {
     expect(() => parseServerEnv({ ...valid, AI_PROVIDER: "autre" })).toThrow(/AI_PROVIDER/);
   });
 
+  it("refuse le fournisseur simulé en production, l'accepte en développement", () => {
+    expect(() => parseServerEnv({ ...valid, AI_PROVIDER: "mock", APP_ENV: "production" })).toThrow(
+      /mock/,
+    );
+    expect(parseServerEnv({ ...valid, AI_PROVIDER: "mock" }).AI_PROVIDER).toBe("mock");
+  });
+
   it("ne révèle jamais la valeur d'un secret dans le message d'erreur", () => {
     const secret = "sk-ne-doit-jamais-apparaitre";
     try {

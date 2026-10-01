@@ -11,22 +11,32 @@ import { z } from "zod";
  * - Les clés IA sont optionnelles ici ; leur présence est vérifiée au moment
  *   où le fournisseur correspondant est réellement instancié.
  */
-export const serverEnvSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  APP_ENV: z.enum(["development", "staging", "production"]).default("development"),
-  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+export const serverEnvSchema = z
+  .object({
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    APP_ENV: z.enum(["development", "staging", "production"]).default("development"),
+    LOG_LEVEL: z
+      .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+      .default("info"),
 
-  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+    DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
 
-  AUTH_SECRET: z.string().min(32, "AUTH_SECRET doit contenir au moins 32 caractères"),
+    AUTH_SECRET: z.string().min(32, "AUTH_SECRET doit contenir au moins 32 caractères"),
 
-  AI_PROVIDER: z.enum(["openai", "gemini"]).default("openai"),
-  AI_MODEL: z.string().min(1).optional(),
-  OPENAI_API_KEY: z.string().min(1).optional(),
-  GEMINI_API_KEY: z.string().min(1).optional(),
+    // « mock » = fournisseur de démonstration, refusé en production (voir refine ci-dessous).
+    AI_PROVIDER: z.enum(["openai", "gemini", "mock"]).default("openai"),
+    AI_MODEL: z.string().min(1).optional(),
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    GEMINI_API_KEY: z.string().min(1).optional(),
 
-  NEXT_PUBLIC_APP_URL: z.url(),
-});
+    NEXT_PUBLIC_APP_URL: z.url(),
+  })
+  // `next start` impose NODE_ENV=production même en local : le garde-fou porte donc sur APP_ENV,
+  // qui désigne l'environnement de déploiement réel.
+  .refine((e) => !(e.AI_PROVIDER === "mock" && e.APP_ENV === "production"), {
+    path: ["AI_PROVIDER"],
+    message: "« mock » est interdit en production (APP_ENV=production)",
+  });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 

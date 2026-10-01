@@ -84,6 +84,8 @@ enum DocumentType {
 enum AIProviderName {
   OPENAI
   GEMINI
+  // Fournisseur de démonstration (développement et tests) : aucun appel réseau, aucun coût.
+  MOCK
 }
 
 enum AIFeature {

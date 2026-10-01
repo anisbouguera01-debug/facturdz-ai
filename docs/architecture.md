@@ -257,3 +257,10 @@ Testé avec 25 envois simultanés.
 `src/server/errors.ts` : les `AppError` portent un message sûr ; toute autre erreur est
 journalisée avec un `errorId` et le client ne reçoit qu'un message générique et cet ID.
 Les server actions passent par `safeAction()` et renvoient toujours un `ActionResult`.
+
+## FacturDZ AI (Phase 12)
+
+Page `/ai` (permission `ai:use`) et actions serveur `src/app/(app)/ai/actions.ts` (chacune commence
+par `requireTenant("ai:use")`). Services : `ai-drafts.ts` (proposition → aperçu → confirmation),
+`ai-assistant.ts` (questions analytiques en lecture seule). Socle : `src/server/ai/` (types,
+fournisseurs, schémas Zod, prompts, rapprochement, outils, `runAI`). Détails dans `docs/ai.md`.

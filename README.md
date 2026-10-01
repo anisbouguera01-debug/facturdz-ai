@@ -4,7 +4,7 @@ Le logiciel de facturation intelligent pour les entreprises algériennes : clien
 devis, factures, PDF, paiements, tableau de bord et assistant IA (OpenAI / Gemini), en SaaS
 multi-entreprise.
 
-> **État : Phase 11 terminée** (tableau de bord). Voir [Feuille de route](#feuille-de-route).
+> **État : Phase 12 terminée** (assistant FacturDZ AI, fournisseur simulé). Voir [Feuille de route](#feuille-de-route).
 
 ## Stack
 
@@ -133,6 +133,7 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 | 6     | Produits                                              | ✅      |
 | 7     | Devis                                                 | ✅      |
 | 8     | Factures (émission numérotée, annulation, conversion) | ✅      |
-| 9–11  | Paiements, PDF, dashboard                             | à faire |
-| 12–15 | FacturDZ AI, OpenAI, Gemini, usage et coûts IA        | à faire |
+| 9–11  | Paiements, PDF, dashboard                             | ✅      |
+| 12    | FacturDZ AI (brouillons validés, assistant, simulé)   | ✅      |
+| 13–15 | OpenAI, Gemini, usage et coûts IA                     | à faire |
 | 16–21 | Plans, admin, sécurité, tests, landing, production    | à faire |

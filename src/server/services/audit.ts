@@ -45,7 +45,11 @@ export type AuditAction =
   | "invoice.deleted"
   | "invoice.created_from_quote"
   | "payment.recorded"
-  | "payment.voided";
+  | "payment.voided"
+  | "ai.draft_created"
+  | "ai.draft_confirmed"
+  | "ai.draft_discarded"
+  | "ai.question";
 
 export interface AuditEntry {
   organizationId: string | null;

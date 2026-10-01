@@ -74,3 +74,13 @@ directement (en-tête `Next-Action`, sans passer par l'interface) sur le build d
 - Toute donnée utilisateur est non fiable, y compris quand elle est transmise à l'IA.
 - L'IA ne peut ni écrire en base, ni supprimer, ni accéder à une autre organisation, ni
   lire un secret.
+
+## IA (Phase 12)
+
+- Le modèle ne voit jamais de données de la base pour créer un document ; sa sortie est
+  validée (Zod) puis recalculée par le serveur ; `organizationId` et montants fournis par
+  le modèle sont ignorés.
+- L'IA ne peut pas émettre ni écrire seule : création d'un brouillon uniquement après
+  confirmation explicite, atomique et limitée à l'auteur de la proposition.
+- Limite de débit par utilisateur (PostgreSQL) et traçabilité complète dans `AIUsage`.
+- Le fournisseur simulé est refusé quand `APP_ENV=production`.

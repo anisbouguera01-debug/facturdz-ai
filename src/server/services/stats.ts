@@ -198,3 +198,153 @@ export async function getDashboard(ctx: Ctx, today: string = todayISO()) {
 }
 
 export type Dashboard = Awaited<ReturnType<typeof getDashboard>>;
+
+// ─────────────── Requêtes ciblées (assistant analytique) ───────────────
+
+export const PERIODS = ["THIS_MONTH", "LAST_MONTH", "THIS_YEAR", "LAST_12_MONTHS"] as const;
+export type Period = (typeof PERIODS)[number];
+
+/** Bornes AAAA-MM-JJ (incluses) d'une période, relativement à `today` (heure d'Alger). */
+export function periodRange(period: Period, today: string = todayISO()) {
+  const [y, m] = today.split("-").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const lastDay = (yy: number, mm: number) => new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+  switch (period) {
+    case "THIS_MONTH":
+      return { from: `${y}-${pad(m)}-01`, to: today };
+    case "LAST_MONTH": {
+      const py = m === 1 ? y - 1 : y;
+      const pm = m === 1 ? 12 : m - 1;
+      return { from: `${py}-${pad(pm)}-01`, to: `${py}-${pad(pm)}-${pad(lastDay(py, pm))}` };
+    }
+    case "THIS_YEAR":
+      return { from: `${y}-01-01`, to: today };
+    case "LAST_12_MONTHS":
+      return { from: `${monthWindow(today, 12)[0].key}-01`, to: today };
+  }
+}
+
+/** Facturé (HT, TVA, TTC), nombre de factures et encaissé sur une période. */
+export async function getPeriodFigures(ctx: Ctx, period: Period, today: string = todayISO()) {
+  assertPermission(ctx, "stats:read");
+  const { from, to } = periodRange(period, today);
+  const [billed, paid] = await Promise.all([
+    ctx.db.invoice.aggregate({
+      where: {
+        status: { in: [...BILLED] },
+        issueDate: { gte: isoToDate(from), lte: isoToDate(to) },
+      },
+      _sum: { subtotal: true, taxTotal: true, total: true },
+      _count: { _all: true },
+    }),
+    ctx.db.payment.aggregate({
+      where: { voidedAt: null, paymentDate: { gte: isoToDate(from), lte: isoToDate(to) } },
+      _sum: { amount: true },
+      _count: { _all: true },
+    }),
+  ]);
+  return {
+    period,
+    from,
+    to,
+    invoiceCount: billed._count._all,
+    invoicedExclTax: (billed._sum.subtotal ?? ZERO()).toFixed(2),
+    taxTotal: (billed._sum.taxTotal ?? ZERO()).toFixed(2),
+    invoicedInclTax: (billed._sum.total ?? ZERO()).toFixed(2),
+    collected: (paid._sum.amount ?? ZERO()).toFixed(2),
+    paymentCount: paid._count._all,
+    currency: "DZD",
+  };
+}
+
+/** Clients ayant des factures ouvertes, du plus gros reste dû au plus petit (plafonné). */
+export async function getUnpaidByCustomer(ctx: Ctx, limit = 10) {
+  assertPermission(ctx, "stats:read");
+  const rows = await ctx.db.invoice.groupBy({
+    by: ["customerId"],
+    where: { status: { in: [...OPEN] } },
+    _sum: { total: true, amountPaid: true },
+    _count: { _all: true },
+  });
+  const ranked = rows
+    .map((r) => ({
+      customerId: r.customerId,
+      invoiceCount: r._count._all,
+      remaining: (r._sum.total ?? ZERO()).minus(r._sum.amountPaid ?? ZERO()),
+    }))
+    .filter((r) => r.remaining.gt(0))
+    .sort((a, b) => b.remaining.comparedTo(a.remaining))
+    .slice(0, Math.min(Math.max(limit, 1), 20));
+  const names = ranked.length
+    ? await ctx.db.customer.findMany({
+        where: { id: { in: ranked.map((r) => r.customerId) } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const nameOf = new Map(names.map((c) => [c.id, c.name]));
+  return ranked.map((r) => ({
+    customer: nameOf.get(r.customerId) ?? "—",
+    invoiceCount: r.invoiceCount,
+    remaining: r.remaining.toFixed(2),
+    currency: "DZD",
+  }));
+}
+
+/** Meilleurs clients par chiffre d'affaires TTC sur une période (plafonné à 10). */
+export async function getTopCustomers(
+  ctx: Ctx,
+  period: Period,
+  limit = 5,
+  today: string = todayISO(),
+) {
+  assertPermission(ctx, "stats:read");
+  const { from, to } = periodRange(period, today);
+  const top = await ctx.db.invoice.groupBy({
+    by: ["customerId"],
+    where: { status: { in: [...BILLED] }, issueDate: { gte: isoToDate(from), lte: isoToDate(to) } },
+    _sum: { total: true },
+    orderBy: { _sum: { total: "desc" } },
+    take: Math.min(Math.max(limit, 1), 10),
+  });
+  const names = top.length
+    ? await ctx.db.customer.findMany({
+        where: { id: { in: top.map((t) => t.customerId) } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const nameOf = new Map(names.map((c) => [c.id, c.name]));
+  return {
+    period,
+    from,
+    to,
+    customers: top.map((t) => ({
+      customer: nameOf.get(t.customerId) ?? "—",
+      invoicedInclTax: (t._sum.total ?? ZERO()).toFixed(2),
+      currency: "DZD",
+    })),
+  };
+}
+
+/** Factures en retard (plafonné à 10, les plus anciennes d'abord). */
+export async function getOverdueInvoices(ctx: Ctx, today: string = todayISO()) {
+  assertPermission(ctx, "stats:read");
+  const rows = await ctx.db.invoice.findMany({
+    where: { status: { in: [...OPEN] }, dueDate: { lt: isoToDate(today) } },
+    orderBy: { dueDate: "asc" },
+    take: 10,
+    select: {
+      invoiceNumber: true,
+      dueDate: true,
+      total: true,
+      amountPaid: true,
+      customer: { select: { name: true } },
+    },
+  });
+  return rows.map((r) => ({
+    invoiceNumber: r.invoiceNumber,
+    customer: r.customer.name,
+    dueDate: r.dueDate ? r.dueDate.toISOString().slice(0, 10) : null,
+    remaining: r.total.minus(r.amountPaid).toFixed(2),
+    currency: "DZD",
+  }));
+}

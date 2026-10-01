@@ -17,6 +17,7 @@ const NAV_ITEMS: (NavItem & { permission?: Permission })[] = [
   { href: "/quotes", label: "Devis", permission: "quotes:read" },
   { href: "/customers", label: "Clients", permission: "customers:read" },
   { href: "/products", label: "Produits", permission: "products:read" },
+  { href: "/ai", label: "FacturDZ AI", permission: "ai:use" },
   { href: "/settings", label: "Paramètres", permission: "settings:manage" },
 ];
 
