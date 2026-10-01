@@ -108,6 +108,43 @@ Chaque module suit le même découpage (exemple : clients, Phase 5) :
   taux ne change jamais un document existant. Un produit ne peut utiliser qu'un taux actif
   de l'entreprise (il peut garder son taux actuel s'il a été désactivé depuis).
 
+## Calcul des documents
+
+`src/lib/billing.ts`, module pur partagé navigateur/serveur :
+
+| Étape (par ligne) | Calcul                               |
+| ----------------- | ------------------------------------ |
+| Brut              | arrondi(quantité × prix unitaire HT) |
+| Remise            | arrondi(brut × remise % / 100)       |
+| HT net            | brut − remise                        |
+| TVA               | arrondi(HT net × TVA % / 100)        |
+| TTC               | HT net + TVA                         |
+
+Le document additionne ses lignes : le total TTC est **toujours** la somme exacte des
+lignes. Arrondi au centime, demi-supérieur, à chaque étape. La TVA est arrondie par ligne ;
+une ventilation par taux est fournie pour l'affichage et le PDF. **À valider avec un
+comptable** : si un calcul de TVA par taux est exigé, seul ce module change.
+
+`src/server/services/document-lines.ts` vérifie les produits et taux de chaque ligne puis
+appelle ce moteur : les montants envoyés par le navigateur sont ignorés.
+
+## Numérotation
+
+`src/server/services/numbering.ts` : un compteur par (entreprise, type, année de la date du
+document). L'incrément a lieu dans la transaction qui émet le document ; le verrou de ligne
+PostgreSQL sérialise les émissions simultanées et une émission annulée ne consomme pas de
+numéro. Préfixe et largeur repris du compteur le plus récent (défaut FAC / DEV, 6 chiffres).
+Testé avec 25 envois simultanés.
+
+## Devis
+
+- Statuts : brouillon → envoyé → accepté / refusé ; « expiré » est calculé (envoyé et date
+  de validité dépassée, heure d'Alger) ; « facturé » sera posé par la conversion (Phase 8).
+- Seul un brouillon se modifie ou se supprime. L'envoi attribue le numéro et fige le devis ;
+  pour changer un devis envoyé, on le duplique.
+- Les listes de l'éditeur (clients, produits) sont limitées à 500 entrées ; un sélecteur
+  avec recherche serveur les remplacera au-delà.
+
 ## Factures
 
 - Statuts stockés : `DRAFT`, `ISSUED`, `PARTIALLY_PAID`, `PAID`, `CANCELLED`.
@@ -125,6 +162,9 @@ Chaque module suit le même découpage (exemple : clients, Phase 5) :
   `ON DELETE NO ACTION`. On ne supprime pas un client ou un produit déjà utilisé dans un
   document : on l'archive ou le désactive. (`SET NULL` est impossible ici, il viderait
   aussi `organizationId`.) La suppression d'une organisation supprime tout en cascade.
+- Ces clés `NO ACTION` sont **différées** (`DEFERRABLE INITIALLY DEFERRED`, migration
+  `deferred_tenant_fks`) : vérifiées au commit, une fois la cascade terminée. Sans cela,
+  supprimer une entreprise échouait dès qu'une ligne de devis référençait un produit.
 - Contraintes `CHECK` en base : montants positifs, taux entre 0 et 100, paiement > 0,
   numéro présent si et seulement si la facture n'est plus un brouillon.
 - Migrations : voir le README (« Créer une migration »). La CI applique les migrations avec

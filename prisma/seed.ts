@@ -6,14 +6,18 @@
  *
  * Contenu actuel : plans, 1 organisation, 2 utilisateurs avec mot de passe
  * (« Demo-FacturDZ-2026 »), taux de TVA, 10 clients, 20 produits, compteurs.
- * Ajouts prévus : devis/factures/paiements
- * via les services de calcul (Phases 7–9), logs IA (Phase 15).
+ * 5 devis créés via les services réels (brouillon, envoyé, expiré, accepté, refusé).
+ * Ajouts prévus : factures/paiements (Phases 8–9), logs IA (Phase 15).
+ * Exécuté avec `--conditions=react-server` pour pouvoir utiliser les services serveur.
  *
  * Refuse de s'exécuter en production.
  */
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "better-auth/crypto";
+import { addDays, todayISO } from "../src/lib/dates";
+import { forTenant } from "../src/server/db/tenant";
+import { createQuote, respondToQuote, sendQuote } from "../src/server/services/quotes";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 import type { LimitKey } from "../src/generated/prisma/enums";
 
@@ -244,11 +248,60 @@ async function main() {
       })),
     });
 
+    // Devis : créés via les services de l'application (calculs et numérotation réels).
+    const ctx = {
+      db: forTenant(db, org.id),
+      role: "OWNER" as const,
+      userId: owner.id,
+      organizationId: org.id,
+    };
+    const customers = await db.customer.findMany({
+      where: { organizationId: org.id },
+      orderBy: { name: "asc" },
+    });
+    const products = await db.product.findMany({
+      where: { organizationId: org.id },
+      orderBy: { name: "asc" },
+    });
+    const pick = (i: number) => products[i % products.length];
+    const lineOf = (i: number, quantity: string, discountRate = "0") => ({
+      productId: pick(i).id,
+      description: pick(i).name,
+      quantity,
+      unitPrice: pick(i).priceHT.toFixed(2),
+      vatRate: pick(i).vatRate.toFixed(2),
+      discountRate,
+    });
+    const today = todayISO();
+    const quotePlans = [
+      { c: 0, days: -40, lines: [lineOf(0, "10"), lineOf(3, "5")], status: "ACCEPTED" },
+      { c: 1, days: -20, lines: [lineOf(5, "2"), lineOf(11, "12", "10")], status: "SENT" },
+      { c: 2, days: -60, lines: [lineOf(7, "1")], status: "REJECTED" },
+      { c: 3, days: -45, lines: [lineOf(9, "3"), lineOf(14, "1")], status: "SENT_EXPIRED" },
+      { c: 4, days: 0, lines: [lineOf(12, "4")], status: "DRAFT" },
+    ] as const;
+    for (const plan of quotePlans) {
+      const issueDate = addDays(today, plan.days);
+      const q = await createQuote(ctx, {
+        customerId: customers[plan.c].id,
+        issueDate,
+        expiryDate: addDays(issueDate, 30),
+        terms: "Prix exprimés en dinars algériens. Données de démonstration.",
+        items: [...plan.lines],
+      });
+      if (plan.status === "DRAFT") continue;
+      await sendQuote(ctx, q.id);
+      if (plan.status === "ACCEPTED" || plan.status === "REJECTED") {
+        await respondToQuote(ctx, q.id, plan.status);
+      }
+    }
+
     const counts = {
       plans: await db.subscriptionPlan.count(),
       customers: await db.customer.count({ where: { organizationId: org.id } }),
       products: await db.product.count({ where: { organizationId: org.id } }),
       members: await db.organizationMember.count({ where: { organizationId: org.id } }),
+      quotes: await db.quote.count({ where: { organizationId: org.id } }),
     };
     console.log(
       `✔ Seed terminé — organisation « ${org.name} »\n` +

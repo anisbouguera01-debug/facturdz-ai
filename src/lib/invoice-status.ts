@@ -1,3 +1,5 @@
+import { dateToISO, todayISO } from "./dates";
+
 /** Libellés et état « en retard » des factures (OVERDUE est calculé, jamais stocké). */
 export type InvoiceStatus = "DRAFT" | "ISSUED" | "PARTIALLY_PAID" | "PAID" | "CANCELLED";
 export type DisplayStatus = InvoiceStatus | "OVERDUE";
@@ -11,15 +13,18 @@ export const INVOICE_STATUS_LABELS: Record<DisplayStatus, string> = {
   OVERDUE: "En retard",
 };
 
-/** En retard : émise ou payée en partie, échéance dépassée (date du jour exclue). */
+/** En retard : émise ou payée en partie, échéance dépassée (jour d'échéance non compris, heure d'Alger). */
 export function displayStatus(
   status: InvoiceStatus,
   dueDate: Date | null,
-  today: Date = new Date(),
+  today: string = todayISO(),
 ): DisplayStatus {
-  if ((status === "ISSUED" || status === "PARTIALLY_PAID") && dueDate) {
-    const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-    if (dueDate.getTime() < todayUtc) return "OVERDUE";
+  if (
+    (status === "ISSUED" || status === "PARTIALLY_PAID") &&
+    dueDate &&
+    dateToISO(dueDate) < today
+  ) {
+    return "OVERDUE";
   }
   return status;
 }

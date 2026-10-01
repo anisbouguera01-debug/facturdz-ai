@@ -189,3 +189,67 @@ describe("suppressions", () => {
     expect(remaining).toEqual([0, 0, 0, 0]);
   });
 });
+
+describe("suppression d'une entreprise complète (régression Phase 7)", () => {
+  async function fullOrg() {
+    const a = await createOrgFixture("Full");
+    const quote = await db.quote.create({
+      data: { organizationId: a.org.id, customerId: a.customer.id, issueDate },
+    });
+    const line = {
+      organizationId: a.org.id,
+      productId: a.product.id,
+      position: 1,
+      description: "x",
+      quantity: "1",
+      unitPrice: "1000",
+      vatRate: "19",
+      subtotal: "1000",
+      taxAmount: "190",
+      total: "1190",
+    };
+    await db.quoteItem.create({ data: { ...line, quoteId: quote.id } });
+    const invoice = await draftInvoice(a.org.id, a.customer.id, {
+      status: "ISSUED",
+      invoiceNumber: "FAC-2026-000900",
+      quoteId: quote.id,
+    });
+    await db.invoiceItem.create({ data: { ...line, invoiceId: invoice.id } });
+    await db.payment.create({
+      data: {
+        organizationId: a.org.id,
+        invoiceId: invoice.id,
+        amount: "10",
+        paymentDate: issueDate,
+        method: "CASH",
+      },
+    });
+    return a;
+  }
+
+  it("supprime une entreprise dont les lignes de devis et de facture référencent des produits", async () => {
+    const a = await fullOrg();
+    await db.organization.delete({ where: { id: a.org.id } });
+    const left = await Promise.all([
+      db.quoteItem.count({ where: { organizationId: a.org.id } }),
+      db.invoiceItem.count({ where: { organizationId: a.org.id } }),
+      db.product.count({ where: { organizationId: a.org.id } }),
+      db.payment.count({ where: { organizationId: a.org.id } }),
+    ]);
+    expect(left).toEqual([0, 0, 0, 0]);
+  });
+
+  it("refuse toujours de supprimer seul un produit, un client ou une facture encore référencés", async () => {
+    const a = await fullOrg();
+    await expect(db.product.delete({ where: { id: a.product.id } })).rejects.toMatchObject({
+      code: "P2003",
+    });
+    await expect(db.customer.delete({ where: { id: a.customer.id } })).rejects.toMatchObject({
+      code: "P2003",
+    });
+    const inv = await db.invoice.findFirstOrThrow({ where: { organizationId: a.org.id } });
+    await expect(db.invoice.delete({ where: { id: inv.id } })).rejects.toMatchObject({
+      code: "P2003",
+    });
+  });
+});

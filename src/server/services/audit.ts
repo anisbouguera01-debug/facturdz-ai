@@ -29,7 +29,14 @@ export type AuditAction =
   | "tax_rate.created"
   | "tax_rate.updated"
   | "tax_rate.deactivated"
-  | "tax_rate.reactivated";
+  | "tax_rate.reactivated"
+  | "quote.created"
+  | "quote.updated"
+  | "quote.sent"
+  | "quote.accepted"
+  | "quote.rejected"
+  | "quote.duplicated"
+  | "quote.deleted";
 
 export interface AuditEntry {
   organizationId: string | null;

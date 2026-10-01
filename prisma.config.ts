@@ -3,7 +3,7 @@ import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
-  migrations: { path: "prisma/migrations", seed: "tsx prisma/seed.ts" },
+  migrations: { path: "prisma/migrations", seed: "tsx --conditions=react-server prisma/seed.ts" },
   datasource: {
     url: env("DATABASE_URL"),
     // Base « fantôme » utilisée par `prisma migrate dev` / `migrate diff --from-migrations`.

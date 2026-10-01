@@ -18,9 +18,9 @@
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx --conditions=react-server prisma/seed.ts",
     "db:migrate:local": "tsx scripts/db/migrate.ts",
-    "db:reset:local": "tsx scripts/db/migrate.ts --reset && tsx prisma/seed.ts",
+    "db:reset:local": "tsx scripts/db/migrate.ts --reset && pnpm db:seed",
     "db:verify": "tsx scripts/db/verify-schema.ts",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration"

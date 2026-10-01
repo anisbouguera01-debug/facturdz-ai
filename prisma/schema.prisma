@@ -409,6 +409,7 @@ model QuoteItem {
   quote   Quote    @relation(fields: [quoteId, organizationId], references: [id, organizationId], onDelete: Cascade)
   product Product? @relation(fields: [productId, organizationId], references: [id, organizationId], onDelete: NoAction)
 
+  @@unique([quoteId, position])
   @@index([quoteId])
   @@map("quote_items")
 }
@@ -478,6 +479,7 @@ model InvoiceItem {
   invoice Invoice  @relation(fields: [invoiceId, organizationId], references: [id, organizationId], onDelete: Cascade)
   product Product? @relation(fields: [productId, organizationId], references: [id, organizationId], onDelete: NoAction)
 
+  @@unique([invoiceId, position])
   @@index([invoiceId])
   @@map("invoice_items")
 }

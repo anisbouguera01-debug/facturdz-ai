@@ -57,14 +57,21 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
             ) : null}
           </div>
         </div>
-        {canWrite ? (
-          <Link
-            href={`/customers/${customer.id}/edit`}
-            className={buttonVariants({ variant: "secondary" })}
-          >
-            Modifier
-          </Link>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {can(context.role, "quotes:write") && !customer.archivedAt ? (
+            <Link href={`/quotes/new?customerId=${customer.id}`} className={buttonVariants()}>
+              Nouveau devis
+            </Link>
+          ) : null}
+          {canWrite ? (
+            <Link
+              href={`/customers/${customer.id}/edit`}
+              className={buttonVariants({ variant: "secondary" })}
+            >
+              Modifier
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <dl className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
