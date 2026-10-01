@@ -28,7 +28,14 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
         >
           FacturDZ <span className="text-primary">AI</span>
         </Link>
-        <SignOutButton />
+        <div className="flex items-center gap-3">
+          {user.platformRole === "SUPER_ADMIN" ? (
+            <Link href="/admin" className="text-sm underline-offset-4 hover:underline">
+              Administration
+            </Link>
+          ) : null}
+          <SignOutButton />
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-4 pt-6 pb-16 sm:px-8 sm:pt-12">

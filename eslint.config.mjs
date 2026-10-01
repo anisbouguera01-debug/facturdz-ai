@@ -8,6 +8,8 @@ import nextTs from "eslint-config-next/typescript";
  *    (exception : NEXT_PUBLIC_*, publiques par définition).
  * 2. Les SDK IA ne sont importés que dans src/server/ai/providers.
  * 3. Le client Prisma généré n'est importé que dans src/server/db.
+ * 4. Les services d'administration plateforme (cross-tenant) ne sont importés que depuis
+ *    src/app/admin et src/server/admin (et src/components/admin pour les types).
  */
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -32,6 +34,10 @@ const eslintConfig = defineConfig([
               message: "Les SDK IA ne s'utilisent que dans src/server/ai/providers.",
             },
             {
+              group: ["@/server/admin/*", "**/server/admin/*"],
+              message: "L'administration plateforme ne s'importe que depuis src/app/admin.",
+            },
+            {
               group: ["@/generated/prisma", "@/generated/prisma/*"],
               message: "Le client Prisma ne s'utilise que dans src/server/db.",
             },
@@ -47,6 +53,22 @@ const eslintConfig = defineConfig([
   {
     files: ["src/server/ai/providers/**"],
     rules: { "no-restricted-imports": "off" },
+  },
+  {
+    files: ["src/app/admin/**", "src/server/admin/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/generated/prisma", "@/generated/prisma/*"],
+              message: "Le client Prisma ne s'utilise que dans src/server/db.",
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     files: ["src/server/db/**"],

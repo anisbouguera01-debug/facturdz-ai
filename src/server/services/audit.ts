@@ -49,7 +49,15 @@ export type AuditAction =
   | "ai.draft_created"
   | "ai.draft_confirmed"
   | "ai.draft_discarded"
-  | "ai.question";
+  | "ai.question"
+  | "admin.role_granted"
+  | "admin.role_revoked"
+  | "admin.subscription_changed"
+  | "admin.plan_updated"
+  | "admin.limit_updated"
+  | "admin.pricing_set"
+  | "admin.user_suspended"
+  | "admin.user_reactivated";
 
 export interface AuditEntry {
   organizationId: string | null;

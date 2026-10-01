@@ -22,6 +22,9 @@ multi-entreprise.
 
 ## Démarrage local
 
+Administrateur de plateforme : `pnpm admin:grant --email <adresse>` (`--revoke` pour retirer) ; en
+démo, `admin@demo.facturdz.test` (même mot de passe que les autres comptes). Panneau : `/admin`.
+
 Prérequis : Node.js ≥ 22, pnpm 10, PostgreSQL 16.
 
 ```bash
@@ -139,4 +142,5 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 | 14    | Fournisseur Gemini (testé sur faux serveur)           | ✅      |
 | 15    | Usage et coûts IA (tarifs saisis, jamais inventés)    | ✅      |
 | 16    | Plans et limites (factures, devis, IA, abonnement)    | ✅      |
-| 17–21 | Admin, sécurité, tests, landing, production           | à faire |
+| 17    | Panneau d'administration de la plateforme             | ✅      |
+| 18–21 | Sécurité, tests, landing, production                  | à faire |

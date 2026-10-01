@@ -115,3 +115,18 @@ directement (en-tête `Next-Action`, sans passer par l'interface) sur le build d
   pour les factures et devis.
 - Les quotas IA bloquent avant tout appel payant au fournisseur ; les refus sont journalisés.
 - Une entreprise sans abonnement échappe aux limites : à surveiller (vérification prévue en Phase 17).
+
+## Administration de la plateforme (Phase 17)
+
+- Rôle `SUPER_ADMIN` (champ `User.platformRole`) : attribué UNIQUEMENT en base via
+  `pnpm admin:grant` (journalisé) ; jamais depuis l'application ni à l'inscription.
+- Chaque page et chaque action `/admin` relit en base le rôle ET le statut ACTIVE de
+  l'utilisateur (`resolveAdmin`). Non-admin : pages en 404 (existence non révélée), actions
+  `FORBIDDEN`. Un administrateur suspendu ou rétrogradé perd l'accès à la requête suivante.
+- Les services d'administration exigent un `AdminContext` (type « branded » produit uniquement
+  par `resolveAdmin`) ; une règle ESLint interdit de les importer hors `src/app/admin` et
+  `src/server/admin`.
+- Confidentialité : l'admin ne voit que des compteurs et métadonnées d'exploitation, jamais
+  clients, lignes, montants ni prompts. Il ne peut ni suspendre un autre admin ni se suspendre.
+- Toute écriture (abonnement, plan, limite, tarif IA, suspension) est inscrite au journal
+  d'activité (`admin.*`, utilisateur, IP, user-agent) dans la même transaction.

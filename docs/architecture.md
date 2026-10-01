@@ -300,3 +300,12 @@ charges et se modifient en base). Service : `src/server/services/limits.ts`.
   (anomalie) = aucune limite + alerte dans les logs.
 - **Page** `/settings/subscription` (propriétaire, administrateur) : plan, statut, usage et plafonds.
   Le changement de plan se fera depuis l'administration (Phase 17), sans paiement en ligne.
+
+## Administration plateforme (Phase 17)
+
+`src/app/admin/**` (hors du groupe `(app)`, qui exige une entreprise) ; services dans
+`src/server/admin/` : `context.ts` (accès), `overview.ts` (lectures transversales),
+`manage.ts` (écritures validées + audit). Pages : vue d'ensemble, entreprises (plan/statut),
+utilisateurs (suspension), plans et limites, tarifs IA. Limites MEMBERS et STORAGE_MB
+modifiables mais pas encore appliquées. Les entreprises sans abonnement (aucune limite) sont
+signalées sur la vue d'ensemble.

@@ -4,6 +4,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { can, type Permission } from "@/lib/permissions";
+import { getCurrentSession } from "@/server/auth/session";
 import { requireTenantPage } from "@/server/tenant/context";
 
 /**
@@ -32,6 +33,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const navItems = NAV_ITEMS.filter((i) => !i.permission || can(context.role, i.permission)).map(
     ({ href, label }) => ({ href, label }),
   );
+  // Lien d'administration réservé au super admin (le panneau revérifie en base, et répond 404 sinon).
+  if ((await getCurrentSession())?.user.platformRole === "SUPER_ADMIN") {
+    navItems.push({ href: "/admin", label: "Administration" });
+  }
   const switcher = <OrganizationSwitcher current={current} memberships={memberships} />;
 
   return (

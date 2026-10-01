@@ -148,7 +148,15 @@ async function main() {
     // Organisation de démonstration : suppression complète puis recréation.
     await db.organization.deleteMany({ where: { slug: DEMO_SLUG } });
     await db.user.deleteMany({
-      where: { email: { in: ["owner@demo.facturdz.test", "comptable@demo.facturdz.test"] } },
+      where: {
+        email: {
+          in: [
+            "owner@demo.facturdz.test",
+            "comptable@demo.facturdz.test",
+            "admin@demo.facturdz.test",
+          ],
+        },
+      },
     });
 
     const year = new Date().getFullYear();
@@ -228,6 +236,20 @@ async function main() {
       where: { id: accountant.id },
       data: { accounts: credential(accountant.id) },
     });
+
+    // Administrateur de plateforme de démonstration (sans entreprise). En production, le rôle
+    // s'attribue uniquement par `pnpm admin:grant`.
+    const admin = await db.user.create({
+      data: {
+        email: "admin@demo.facturdz.test",
+        emailVerified: true,
+        name: "Admin Demo",
+        firstName: "Admin",
+        lastName: "Demo",
+        platformRole: "SUPER_ADMIN",
+      },
+    });
+    await db.user.update({ where: { id: admin.id }, data: { accounts: credential(admin.id) } });
 
     await db.customer.createMany({
       data: CUSTOMERS.map(([name, wilaya, commune], i) => ({
@@ -387,6 +409,7 @@ async function main() {
     console.log(
       `✔ Seed terminé — organisation « ${org.name} »\n` +
         `  Connexion : ${owner.email} (OWNER) ou ${accountant.email} (ACCOUNTANT)\n` +
+        `  Admin plateforme : ${admin.email}\n` +
         `  Mot de passe : ${DEMO_PASSWORD}`,
       counts,
     );
