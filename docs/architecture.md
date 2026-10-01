@@ -264,3 +264,17 @@ Page `/ai` (permission `ai:use`) et actions serveur `src/app/(app)/ai/actions.ts
 par `requireTenant("ai:use")`). Services : `ai-drafts.ts` (proposition → aperçu → confirmation),
 `ai-assistant.ts` (questions analytiques en lecture seule). Socle : `src/server/ai/` (types,
 fournisseurs, schémas Zod, prompts, rapprochement, outils, `runAI`). Détails dans `docs/ai.md`.
+
+## Règle d'arrondi (validée par le propriétaire du produit)
+
+TVA arrondie à 2 décimales **par ligne** (demi-supérieur), Decimal partout, jamais de flottants :
+
+1. HT brut = quantité × prix unitaire ; remise selon le taux de la ligne ; `taxableAmount` = HT net.
+2. `taxAmount` = arrondi(taxableAmount × taux / 100, 2) ; TTC ligne = taxableAmount + taxAmount.
+3. `totalHT` = Σ taxableAmount ; `totalTVA` = Σ taxAmount déjà arrondis ; `totalTTC` = totalHT + totalTVA.
+
+Implémentation unique : `src/lib/billing.ts` (`computeLine`, `computeDocument`), utilisée par le
+serveur (`prepareLines`), l'éditeur (aperçu), les aperçus IA et le PDF (valeurs stockées, aucun
+recalcul). Garanties : tests `tests/unit/billing-rounding.test.ts` et contraintes CHECK
+`total = subtotal + taxAmount/taxTotal` sur lignes et documents (migration `…_totals_consistency`).
+**Ne pas modifier cette règle sans validation explicite.**

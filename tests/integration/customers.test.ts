@@ -220,6 +220,7 @@ describe("statistiques", () => {
           ...base,
           status: "ISSUED",
           invoiceNumber: `S-${c.id}-1`,
+          subtotal: "1190.00",
           total: "1190.00",
           amountPaid: "0",
         },
@@ -227,11 +228,18 @@ describe("statistiques", () => {
           ...base,
           status: "PARTIALLY_PAID",
           invoiceNumber: `S-${c.id}-2`,
+          subtotal: "1000.10",
           total: "1000.10",
           amountPaid: "500.05",
         },
-        { ...base, status: "DRAFT", total: "9999.99" },
-        { ...base, status: "CANCELLED", invoiceNumber: `S-${c.id}-3`, total: "5000" },
+        { ...base, status: "DRAFT", subtotal: "9999.99", total: "9999.99" },
+        {
+          ...base,
+          status: "CANCELLED",
+          invoiceNumber: `S-${c.id}-3`,
+          subtotal: "5000",
+          total: "5000",
+        },
       ],
     });
     await expect(getCustomerStats(A.ctx, c.id)).resolves.toEqual({

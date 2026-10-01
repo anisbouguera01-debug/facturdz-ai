@@ -362,3 +362,23 @@ describe("liste", () => {
     expect((await listInvoices(t.ctx, { q: t.customer.name.slice(0, 8) })).total).toBe(4);
   });
 });
+
+describe("règle d'arrondi : TTC = HT + TVA, y compris en base", () => {
+  it("la base refuse un total incohérent", async () => {
+    const t = await createTenantContext("OWNER", "RND");
+    await createTaxRate(t.ctx, { label: "TVA 19", rate: "19" });
+    const inv = await createInvoice(t.ctx, {
+      customerId: t.customer.id,
+      issueDate: todayISO(),
+      items: [{ description: "x", quantity: "1", unitPrice: "10.03", vatRate: "19" }],
+    });
+    const stored = await t.ctx.db.invoice.findUniqueOrThrow({ where: { id: inv.id } });
+    expect(stored.taxTotal.toFixed(2)).toBe("1.91");
+    expect(stored.total.toFixed(2)).toBe(stored.subtotal.plus(stored.taxTotal).toFixed(2));
+    await expect(
+      testDb().$executeRawUnsafe(
+        `UPDATE "invoices" SET "total" = "total" + 0.01 WHERE id = '${inv.id}'`,
+      ),
+    ).rejects.toThrow();
+  });
+});
