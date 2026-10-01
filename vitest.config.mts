@@ -15,7 +15,13 @@ export default defineConfig({
     restoreMocks: true,
     // Logs coupés pendant les tests (les tests qui en dépendent espionnent le logger).
     env: { LOG_LEVEL: "silent" },
-    coverage: { provider: "v8", include: ["src/server/**", "src/lib/**"] },
+    coverage: {
+      provider: "v8",
+      include: ["src/server/**", "src/lib/**"],
+      // Plancher anti-régression (couverture actuelle : ~89 % lignes). Le code lié à la requête
+      // HTTP (session, contexte tenant, proxy) est couvert par les tests e2e, pas ici.
+      thresholds: { lines: 85, statements: 85, functions: 85, branches: 70 },
+    },
     projects: [
       {
         resolve,

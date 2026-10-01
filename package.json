@@ -25,7 +25,10 @@
     "admin:grant": "tsx scripts/db/grant-admin.ts",
     "ai:pricing": "tsx --conditions=react-server scripts/db/set-pricing.ts",
     "test:unit": "vitest run --project unit",
-    "test:integration": "vitest run --project integration"
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "playwright test",
+    "check:bundle": "tsx scripts/check-client-bundle.ts",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -49,6 +52,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.0",
     "@prisma/prisma-schema-wasm": "7.10.0-4.0edf323efd1d98336f3f0a68684b56f689b900d3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.20.4",
@@ -56,6 +60,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.0.3",
     "dotenv": "^18.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",

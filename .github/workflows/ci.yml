@@ -35,6 +35,7 @@ jobs:
       # Valeurs factices réservées à la CI (aucun secret réel).
       AUTH_SECRET: ci-only-secret-not-used-anywhere-else-000000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      AI_PROVIDER: mock
 
     steps:
       - uses: actions/checkout@v4
@@ -96,8 +97,30 @@ jobs:
       - name: Format
         run: pnpm format:check
 
-      - name: Tests unitaires et d'intégration
-        run: pnpm test
+      - name: Tests unitaires et d'intégration (avec seuil de couverture)
+        run: pnpm test:coverage
 
       - name: Build
         run: pnpm build
+
+      - name: Aucun secret dans le JavaScript envoyé au navigateur
+        run: pnpm check:bundle
+
+      - name: Installer Chromium pour les tests e2e
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Tests de bout en bout (application compilée + base de démo)
+        run: |
+          pnpm start -p 3000 > next.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/login >/dev/null && break; sleep 2; done
+          pnpm test:e2e
+
+      - name: Publier les traces e2e en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-traces
+          path: |
+            test-results
+            next.log
+          if-no-files-found: ignore

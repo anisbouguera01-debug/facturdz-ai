@@ -88,3 +88,37 @@ describe("CSP", () => {
     expect(atob(a)).toHaveLength(16);
   });
 });
+
+describe("secrets et navigateur (test critique n°7)", () => {
+  const all = walk("src").filter((f) => /\.tsx?$/.test(f));
+  const clientFiles = all.filter((f) => /^(["'])use client\1/.test(readFileSync(f, "utf8")));
+
+  it("détecte bien les composants client", () => {
+    expect(clientFiles.length).toBeGreaterThan(10);
+  });
+
+  it("aucun composant client n'importe de code serveur (hors types)", () => {
+    for (const f of clientFiles) {
+      const imports = readFileSync(f, "utf8").match(/^import[^;]*from\s+["'][^"']+["']/gm) ?? [];
+      for (const line of imports) {
+        const isServer = /from\s+["'](@\/server\/|\.\.?\/.*server\/|server-only|@\/generated)/.test(
+          line,
+        );
+        if (isServer) expect(/^import\s+type\b/.test(line), `${f} : ${line}`).toBe(true);
+      }
+    }
+  });
+
+  it("aucune variable NEXT_PUBLIC_ ne porte un secret", () => {
+    for (const f of all) {
+      const names = readFileSync(f, "utf8").match(/NEXT_PUBLIC_[A-Z0-9_]+/g) ?? [];
+      for (const n of names) expect(n, f).not.toMatch(/KEY|SECRET|TOKEN|PASSWORD|DATABASE/);
+    }
+  });
+
+  it("les clés des fournisseurs IA ne sont lues que dans src/server", () => {
+    for (const f of all.filter((x) => !x.startsWith("src/server"))) {
+      expect(readFileSync(f, "utf8"), f).not.toMatch(/OPENAI_API_KEY|GEMINI_API_KEY/);
+    }
+  });
+});
