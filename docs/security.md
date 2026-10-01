@@ -84,3 +84,11 @@ directement (en-tête `Next-Action`, sans passer par l'interface) sur le build d
   confirmation explicite, atomique et limitée à l'auteur de la proposition.
 - Limite de débit par utilisateur (PostgreSQL) et traçabilité complète dans `AIUsage`.
 - Le fournisseur simulé est refusé quand `APP_ENV=production`.
+
+## Fournisseur OpenAI (Phase 13)
+
+- `OPENAI_API_KEY` : variable serveur uniquement, jamais préfixée `NEXT_PUBLIC_`, jamais journalisée.
+- Les erreurs du fournisseur sont converties en messages génériques ; aucun corps de réponse
+  (qui peut contenir des extraits de la requête) n'est journalisé ni affiché.
+- Un outil demandé par le modèle n'est exécuté que s'il est dans la liste blanche et que ses
+  arguments passent la validation Zod ; l'entreprise vient toujours du contexte serveur.

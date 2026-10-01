@@ -82,3 +82,23 @@ aucun outil d'écriture ou de suppression, aucun secret dans le contexte, donné
   affichée avec les « données utilisées » pour vérification.
 - **Limites connues** : le fournisseur simulé ne comprend que des formulations simples ; si le
   client demandé n'existe pas, il faut le créer puis refaire la demande.
+
+## Fournisseur OpenAI (Phase 13)
+
+- **Activation** : `AI_PROVIDER=openai`, `OPENAI_API_KEY` et `AI_MODEL` (nom exact du modèle,
+  choisi par l'exploitant : aucun modèle par défaut n'est codé). Si l'une des deux variables
+  manque, l'IA répond « non configurée » sans appel réseau ni fuite de détail.
+- **Implémentation** : `src/server/ai/providers/openai.ts`, API Chat Completions via `fetch`.
+  **Aucune dépendance ajoutée** (pas de SDK) : moins de surface d'attaque, un seul fichier à
+  maintenir. La clé n'est lue que côté serveur et n'apparaît jamais dans les logs ni les erreurs.
+- **Sortie structurée** : mode JSON ; la validation est faite par Zod côté serveur (le mode JSON
+  de l'API ne remplace pas la validation). Un contenu non JSON déclenche la relance de correction.
+- **Outils** : schémas JSON générés depuis les schémas Zod des outils (liste blanche, lecture
+  seule). Outil inconnu = jamais exécuté ; arguments invalides = refusés ; boucle bornée à
+  4 tours, le dernier sans outils. Les compteurs de tokens sont cumulés sur tous les tours.
+- **Robustesse** : délai maximal de 30 s par appel, une relance sur erreur réseau/429/5xx.
+  Le corps des réponses d'erreur n'est jamais journalisé ni renvoyé (il peut citer la requête).
+- **Vérification** : tests unitaires contre un faux serveur (`tests/unit/openai-provider.test.ts`).
+  **Non testé contre l'API réelle** (réseau non autorisé dans l'environnement de
+  développement) : un essai manuel avec une vraie clé est nécessaire avant la mise en production.
+- Les tarifs et le coût estimé par appel arrivent en Phase 15.

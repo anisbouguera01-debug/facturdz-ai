@@ -135,5 +135,6 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 | 8     | Factures (émission numérotée, annulation, conversion) | ✅      |
 | 9–11  | Paiements, PDF, dashboard                             | ✅      |
 | 12    | FacturDZ AI (brouillons validés, assistant, simulé)   | ✅      |
-| 13–15 | OpenAI, Gemini, usage et coûts IA                     | à faire |
+| 13    | Fournisseur OpenAI (testé sur faux serveur)           | ✅      |
+| 14–15 | Gemini, usage et coûts IA                             | à faire |
 | 16–21 | Plans, admin, sécurité, tests, landing, production    | à faire |

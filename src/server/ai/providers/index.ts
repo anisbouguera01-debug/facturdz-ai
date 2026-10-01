@@ -1,19 +1,28 @@
 import "server-only";
 import { serverEnv } from "@/server/env";
 import { AppError } from "@/server/errors";
+import { logger } from "@/server/logger";
 import type { AIProvider } from "../types";
 import { MockProvider } from "./mock";
+import { OpenAIProvider } from "./openai";
 
 /**
  * Sélection du fournisseur selon `AI_PROVIDER`. Les clés ne sont lues qu'ici, jamais
- * journalisées. OpenAI (Phase 13) et Gemini (Phase 14) s'ajouteront à ce commutateur.
+ * journalisées. Gemini (Phase 14) s'ajoutera à ce commutateur.
  */
 export function getProvider(): AIProvider {
   const env = serverEnv();
   switch (env.AI_PROVIDER) {
     case "mock":
       return new MockProvider();
-    case "openai":
+    case "openai": {
+      // Aucun modèle par défaut inventé : l'exploitant choisit explicitement (AI_MODEL).
+      if (!env.OPENAI_API_KEY || !env.AI_MODEL) {
+        logger.error("OPENAI_API_KEY ou AI_MODEL manquant alors que AI_PROVIDER=openai");
+        throw new AppError("AI_UNAVAILABLE", "L'assistant IA n'est pas configuré.");
+      }
+      return new OpenAIProvider({ apiKey: env.OPENAI_API_KEY, model: env.AI_MODEL });
+    }
     case "gemini":
     default:
       throw new AppError(
