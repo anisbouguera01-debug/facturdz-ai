@@ -1,8 +1,8 @@
 import "server-only";
 import { z, type ZodType } from "zod";
 import { AppError } from "@/server/errors";
-import { logger } from "@/server/logger";
 import type { AIProvider, AIRequest, AIResult, AITool, AIToolCall, AIUsageReport } from "../types";
+import { postJson } from "./http";
 
 /**
  * Fournisseur OpenAI (API Chat Completions) via `fetch` : aucune dépendance ajoutée, aucun SDK,
@@ -48,8 +48,6 @@ interface ChatResponse {
   };
 }
 
-const RETRY_STATUS = new Set([408, 429, 500, 502, 503, 504]);
-
 export class OpenAIProvider implements AIProvider {
   readonly id = "OPENAI" as const;
   readonly model: string;
@@ -68,45 +66,14 @@ export class OpenAIProvider implements AIProvider {
     this.sleep = options.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
   }
 
-  /** Un appel HTTP, avec une relance. Lève AppError sans jamais exposer corps ni clé. */
-  private async chat(body: Record<string, unknown>): Promise<ChatResponse> {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      let res: Response;
-      try {
-        res = await this.fetchImpl(`${this.baseUrl}/chat/completions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          body: JSON.stringify({ model: this.model, ...body }),
-          signal: AbortSignal.timeout(this.timeoutMs),
-        });
-      } catch (error) {
-        const timeout = (error as { name?: string }).name === "TimeoutError";
-        if (attempt === 0) {
-          await this.sleep(500);
-          continue;
-        }
-        logger.warn({ provider: "openai", timeout }, "Appel OpenAI impossible");
-        throw new AppError("AI_UNAVAILABLE", undefined, { cause: error });
-      }
-      if (res.ok) return (await res.json()) as ChatResponse;
-
-      if (RETRY_STATUS.has(res.status) && attempt === 0) {
-        await this.sleep(500);
-        continue;
-      }
-      logger.warn({ provider: "openai", status: res.status }, "Réponse d'erreur OpenAI");
-      if (res.status === 429)
-        throw new AppError(
-          "RATE_LIMITED",
-          "Le service d'IA est saturé. Réessayez dans un instant.",
-        );
-      // 400/401/403/404… : configuration ou requête (clé, modèle) : indisponible pour l'utilisateur.
-      throw new AppError("AI_UNAVAILABLE");
-    }
-    throw new AppError("AI_UNAVAILABLE");
+  private chat(body: Record<string, unknown>): Promise<ChatResponse> {
+    return postJson<ChatResponse>(
+      "openai",
+      `${this.baseUrl}/chat/completions`,
+      { Authorization: `Bearer ${this.apiKey}` },
+      { model: this.model, ...body },
+      { fetchImpl: this.fetchImpl, sleep: this.sleep, timeoutMs: this.timeoutMs },
+    );
   }
 
   private static usage(r: ChatResponse): AIUsageReport {

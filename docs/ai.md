@@ -102,3 +102,19 @@ aucun outil d'écriture ou de suppression, aucun secret dans le contexte, donné
   **Non testé contre l'API réelle** (réseau non autorisé dans l'environnement de
   développement) : un essai manuel avec une vraie clé est nécessaire avant la mise en production.
 - Les tarifs et le coût estimé par appel arrivent en Phase 15.
+
+## Fournisseur Gemini (Phase 14)
+
+- **Activation** : `AI_PROVIDER=gemini`, `GEMINI_API_KEY` et `AI_MODEL` (nom exact du modèle,
+  aucun défaut codé). Variable manquante = « non configuré », sans appel réseau.
+- **Implémentation** : `src/server/ai/providers/gemini.ts` (API REST `generateContent` via
+  `fetch`, aucune dépendance). La clé passe par l'en-tête `x-goog-api-key`, jamais par l'URL.
+- **Logique partagée** : `providers/http.ts` (délai de 30 s, une relance sur réseau/429/5xx,
+  erreurs génériques sans corps ni clé) est commune à OpenAI et Gemini.
+- **Différences gérées** : instruction système séparée (`systemInstruction`), mode JSON par
+  `responseMimeType`, schémas d'outils nettoyés des mots-clés non pris en charge, retours d'outils
+  en `functionResponse`, jetons de « réflexion » comptés comme jetons de sortie.
+- **Garanties identiques à OpenAI** : validation Zod côté serveur, outils en liste blanche et
+  lecture seule, boucle bornée à 4 tours, outil inconnu jamais exécuté.
+- **Vérification** : faux serveur uniquement (`tests/unit/gemini-provider.test.ts`) ; **non testé
+  contre l'API réelle** : essai manuel avec une vraie clé requis avant la production.

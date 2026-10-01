@@ -92,3 +92,10 @@ directement (en-tête `Next-Action`, sans passer par l'interface) sur le build d
   (qui peut contenir des extraits de la requête) n'est journalisé ni affiché.
 - Un outil demandé par le modèle n'est exécuté que s'il est dans la liste blanche et que ses
   arguments passent la validation Zod ; l'entreprise vient toujours du contexte serveur.
+
+## Fournisseur Gemini (Phase 14)
+
+- `GEMINI_API_KEY` : serveur uniquement, transmise par en-tête (jamais dans l'URL, qui peut
+  être journalisée par des intermédiaires), jamais journalisée.
+- Mêmes protections que pour OpenAI : erreurs génériques, aucun corps de réponse exposé,
+  outils en liste blanche validés par Zod.
