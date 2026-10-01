@@ -137,5 +137,5 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 | 12    | FacturDZ AI (brouillons validés, assistant, simulé)   | ✅      |
 | 13    | Fournisseur OpenAI (testé sur faux serveur)           | ✅      |
 | 14    | Fournisseur Gemini (testé sur faux serveur)           | ✅      |
-| 15    | Usage et coûts IA                                     | à faire |
+| 15    | Usage et coûts IA (tarifs saisis, jamais inventés)    | ✅      |
 | 16–21 | Plans, admin, sécurité, tests, landing, production    | à faire |

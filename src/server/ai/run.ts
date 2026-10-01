@@ -4,6 +4,7 @@ import { AppError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { consumeRateLimit } from "@/server/security/rate-limit";
 import { assertPermission, type TenantContext } from "@/server/tenant/resolve";
+import { computeCost, findPricing } from "./cost";
 import { getProvider } from "./providers";
 import type { AIFeatureId, AIProvider, AIResult } from "./types";
 
@@ -24,7 +25,7 @@ export const AI_REQUESTS_PER_MINUTE = 20;
  * Point d'entrée UNIQUE des appels IA :
  *   permission `ai:use` → limite de débit → appel fournisseur → validation → AIUsage.
  * Un `AIUsage` est enregistré dans TOUS les cas (succès, erreur fournisseur, sortie invalide,
- * limite atteinte). Le coût estimé est calculé en Phase 15 (null = « non estimé »).
+ * limite atteinte). Le coût estimé vient de `model_pricing` (null = « non estimé » : aucun tarif applicable).
  * Le prompt et la réponse ne sont jamais journalisés ; seuls des compteurs le sont.
  */
 export async function runAI<R, T>(
@@ -69,7 +70,23 @@ export async function runAI<R, T>(
       : new AppError("AI_UNAVAILABLE", undefined, { cause: error });
   }
 
-  const record = (status: "SUCCESS" | "INVALID_OUTPUT", errorCode?: string) =>
+  /** Tarif applicable → coût estimé ; sans tarif (ou en cas d'échec de lecture) → null. */
+  const costOf = async () => {
+    try {
+      const pricing = await findPricing(result.provider, result.model);
+      if (!pricing) return {};
+      return {
+        estimatedCost: computeCost(result.usage, pricing),
+        currency: pricing.currency,
+        pricingId: pricing.id,
+      };
+    } catch (error) {
+      logger.warn({ err: error, requestId }, "Tarif IA illisible : coût non estimé");
+      return {};
+    }
+  };
+
+  const record = async (status: "SUCCESS" | "INVALID_OUTPUT", errorCode?: string) =>
     ctx.db.aIUsage.create({
       data: {
         ...base,
@@ -80,6 +97,7 @@ export async function runAI<R, T>(
         cachedInputTokens: result.usage.cachedInputTokens,
         outputTokens: result.usage.outputTokens,
         totalTokens: result.usage.inputTokens + result.usage.outputTokens,
+        ...(await costOf()),
         latencyMs: Date.now() - started,
         status,
         errorCode,

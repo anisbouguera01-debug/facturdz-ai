@@ -118,3 +118,23 @@ aucun outil d'écriture ou de suppression, aucun secret dans le contexte, donné
   lecture seule, boucle bornée à 4 tours, outil inconnu jamais exécuté.
 - **Vérification** : faux serveur uniquement (`tests/unit/gemini-provider.test.ts`) ; **non testé
   contre l'API réelle** : essai manuel avec une vraie clé requis avant la production.
+
+## Usage et coûts (Phase 15)
+
+- **Tarifs** : table globale `model_pricing` (prix par million de jetons : entrée, sortie, entrée en
+  cache, devise, date d'effet, date de fin). **Aucun prix n'est codé en dur ni inventé** : l'exploitant
+  les saisit avec `pnpm ai:pricing --provider openai|gemini --model <modèle> --input <prix>
+--output <prix> [--cached <prix>] [--currency USD] [--from AAAA-MM-JJ]`, d'après la grille
+  publiée par le fournisseur. Un nouveau tarif ferme le précédent à sa date d'effet (historique
+  conservé, date antérieure refusée). Le panneau d'administration (Phase 17) réutilisera cette fonction.
+- **Calcul** (`src/server/ai/cost.ts`) : Decimal, 6 décimales. `inputTokens` inclut le cache
+  (convention OpenAI/Gemini) : la part en cache est facturée au tarif « cache » s'il existe, sinon
+  au tarif d'entrée. Les jetons de réflexion Gemini comptent en sortie.
+- **Enregistrement** : `runAI` calcule le coût au moment de l'appel avec le tarif en vigueur et
+  garde `pricingId` ; un changement de tarif ultérieur ne réécrit pas l'historique. **Sans tarif
+  applicable, le coût reste `null` (« non estimé »), jamais 0.**
+- **Consultation** : page `/ai/usage` (droit `stats:read`) : appels réussis/erreurs/réponses
+  invalides/refus de limite, jetons, coût estimé par devise, détail par fonctionnalité, et nombre
+  d'appels sans tarif. Strictement limitée à l'entreprise ; aucun prompt ni réponse n'est stocké.
+- **Limite** : estimation indicative ; la facture du fournisseur fait foi. Les quotas par plan
+  (blocage à l'atteinte d'une limite) arrivent en Phase 16.

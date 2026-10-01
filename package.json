@@ -22,6 +22,7 @@
     "db:migrate:local": "tsx scripts/db/migrate.ts",
     "db:reset:local": "tsx scripts/db/migrate.ts --reset && pnpm db:seed",
     "db:verify": "tsx scripts/db/verify-schema.ts",
+    "ai:pricing": "tsx --conditions=react-server scripts/db/set-pricing.ts",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration"
   },

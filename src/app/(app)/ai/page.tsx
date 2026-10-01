@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AiDraftPreview } from "@/components/forms/ai-draft-preview";
 import { AiAssistant } from "@/components/forms/ai-assistant";
 import { Forbidden } from "@/components/layout/forbidden";
@@ -34,6 +35,13 @@ export default async function AiPage({ searchParams }: PageProps<"/ai">) {
         Décrivez un devis ou une facture, ou posez une question sur votre activité. L&apos;IA
         propose, le serveur calcule, vous confirmez.
       </p>
+      {can(context.role, "stats:read") ? (
+        <p className="mt-2 text-sm">
+          <Link href="/ai/usage" className="underline underline-offset-4">
+            Voir la consommation IA
+          </Link>
+        </p>
+      ) : null}
       {demo ? (
         <p className="mt-4 rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
           Mode démonstration : un assistant simulé répond (aucun fournisseur d&apos;IA connecté).

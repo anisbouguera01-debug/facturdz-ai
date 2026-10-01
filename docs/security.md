@@ -99,3 +99,11 @@ directement (en-tête `Next-Action`, sans passer par l'interface) sur le build d
   être journalisée par des intermédiaires), jamais journalisée.
 - Mêmes protections que pour OpenAI : erreurs génériques, aucun corps de réponse exposé,
   outils en liste blanche validés par Zod.
+
+## Usage IA (Phase 15)
+
+- La consommation n'est visible que des rôles ayant `stats:read`, et uniquement pour leur entreprise.
+- `AIUsage` ne contient que des compteurs et des identifiants : jamais de prompt, de réponse
+  ni de donnée client.
+- La saisie des tarifs passe par une commande d'exploitation (accès base requis), pas par une
+  route web ; le panneau d'administration (Phase 17) devra la protéger par un rôle plateforme.
