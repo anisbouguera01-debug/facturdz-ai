@@ -72,6 +72,25 @@ Matrice dans `src/lib/permissions.ts`, testée dans `tests/unit/permissions.test
 | EMPLOYEE   | Clients, devis, brouillons de factures, IA ; n'émet pas, n'encaisse pas, pas de statistiques                                           |
 | VIEWER     | Lecture seule, sans IA                                                                                                                 |
 
+## Modules métier
+
+Chaque module suit le même découpage (exemple : clients, Phase 5) :
+
+| Couche     | Fichier                              | Rôle                                                                                                                  |
+| ---------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Validation | `src/lib/validation/customer.ts`     | Schémas Zod partagés formulaire / serveur, paramètres de liste tolérants (une URL invalide est corrigée, pas rejetée) |
+| Service    | `src/server/services/customers.ts`   | Vérifie la permission **lui-même**, n'utilise que `ctx.db`, journalise, renvoie des DTO                               |
+| Actions    | `src/app/(app)/customers/actions.ts` | `requireTenant(permission)` puis service ; renvoie toujours un `ActionResult`                                         |
+| Pages      | `src/app/(app)/customers/**`         | Server Components ; `orNotFound()` transforme NOT_FOUND en 404                                                        |
+
+- Pagination, recherche et filtres côté serveur, par paramètres d'URL (liens partageables,
+  fonctionne sans JavaScript).
+- Une ressource d'une autre entreprise renvoie NOT_FOUND, jamais FORBIDDEN : on ne révèle
+  pas son existence.
+- Suppression définitive seulement sans document lié ; sinon archivage.
+- Montants affichés avec `formatMoney()` (`src/lib/format.ts`), formatage exact sur chaînes
+  décimales, sans conversion en nombre flottant.
+
 ## Montants
 
 - Stockage `Decimal(14,2)`, calculs avec `Prisma.Decimal` / decimal.js, jamais de `number`.

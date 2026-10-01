@@ -15,7 +15,12 @@ export type AuditAction =
   | "organization.switched"
   | "member.added"
   | "member.role_changed"
-  | "member.removed";
+  | "member.removed"
+  | "customer.created"
+  | "customer.updated"
+  | "customer.archived"
+  | "customer.restored"
+  | "customer.deleted";
 
 export interface AuditEntry {
   organizationId: string | null;

@@ -51,6 +51,17 @@ Détails dans `docs/architecture.md` (Multi-tenant). Tests : `tests/integration/
 - Compte suspendu : accès coupé dès la requête suivante, même avec une session ouverte.
 - Journal d'audit (`audit_logs`) : création d'entreprise, changement d'organisation.
 
+## Server actions (vérifié en Phase 5)
+
+Les server actions sont des points d'entrée HTTP publics : elles ont été appelées
+directement (en-tête `Next-Action`, sans passer par l'interface) sur le build de production.
+
+- Rôle lecture seule : création refusée (FORBIDDEN), rien écrit en base.
+- Propriétaire d'une autre entreprise visant un client de la démo : modification,
+  archivage et suppression refusés (NOT_FOUND), pages en 404, données intactes.
+- Origine étrangère : requête rejetée par Next.js, rien écrit.
+- Sans session : redirection vers la connexion avant l'action.
+
 ## Prévu
 
 - **Phase 18** : CSP stricte avec nonce, rate limiting applicatif (IA, API), journal de

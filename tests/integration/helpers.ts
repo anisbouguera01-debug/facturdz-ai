@@ -1,4 +1,6 @@
+import type { Role } from "@/lib/permissions";
 import { createPrismaClient, type Db } from "@/server/db/client";
+import { forTenant } from "@/server/db/tenant";
 
 let db: Db | undefined;
 
@@ -26,4 +28,31 @@ export async function createOrgFixture(name = "Org") {
     data: { organizationId: org.id, name: `Produit ${id}`, priceHT: "1000", vatRate: "19" },
   });
   return { org, customer, product };
+}
+
+/**
+ * Contexte tenant complet pour tester les services : une organisation neuve
+ * et un utilisateur membre avec le rôle demandé.
+ */
+export async function createTenantContext(role: Role = "OWNER", name = "Org") {
+  const { org, customer, product } = await createOrgFixture(name);
+  const id = uid();
+  const user = await testDb().user.create({
+    data: { email: `${id}@ctx.test`, name: `User ${id}` },
+  });
+  await testDb().organizationMember.create({
+    data: { organizationId: org.id, userId: user.id, role },
+  });
+  const ctx = {
+    userId: user.id,
+    organizationId: org.id,
+    role,
+    db: forTenant(testDb(), org.id),
+  };
+  return { ctx, org, customer, product, user };
+}
+
+/** Même organisation, autre rôle. */
+export function withRole<T extends { role: Role }>(ctx: T, role: Role): T {
+  return { ...ctx, role };
 }

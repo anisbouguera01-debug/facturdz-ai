@@ -9,7 +9,10 @@ import { requireTenantPage } from "@/server/tenant/context";
  * Sections disponibles. Chaque phase ajoute la sienne ici
  * (Factures, Devis, Clients, Produits, Paiements, FacturDZ AI, Rapports, Paramètres).
  */
-const NAV_ITEMS: NavItem[] = [{ href: "/dashboard", label: "Tableau de bord" }];
+const NAV_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: "Tableau de bord" },
+  { href: "/customers", label: "Clients" },
+];
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const { context, memberships } = await requireTenantPage();
