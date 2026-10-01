@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getCurrentSession } from "@/server/auth/session";
 import { getDb, type Db } from "@/server/db/client";
 import { AppError } from "@/server/errors";
+import { consumeRateLimit } from "@/server/security/rate-limit";
 
 /**
  * Accès à l'administration de la plateforme (« Super Admin FacturDZ »), strictement séparé du
@@ -65,7 +66,11 @@ async function fromRequest(): Promise<AdminContext> {
 }
 
 /** Pour les server actions : lève UNAUTHENTICATED / FORBIDDEN. À appeler en première ligne. */
-export const requireSuperAdmin = fromRequest;
+export async function requireSuperAdmin(): Promise<AdminContext> {
+  const admin = await fromRequest();
+  await consumeRateLimit("admin:user", admin.userId, 60, 60);
+  return admin;
+}
 
 /** Pour les pages : 404 pour tout autre que le super admin. */
 export async function requireSuperAdminPage(): Promise<AdminContext> {

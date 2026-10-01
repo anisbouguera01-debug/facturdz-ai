@@ -2,15 +2,10 @@ import type { NextConfig } from "next";
 
 /**
  * En-têtes de sécurité appliqués à toutes les routes.
- * La CSP stricte avec nonce (script-src) sera ajoutée en Phase 18 via le proxy ;
- * ici on pose une CSP de base qui ne casse rien mais bloque le clickjacking,
- * les plugins et les détournements de <base>/<form>.
+ * La CSP (avec nonce par requête) est posée par src/proxy.ts (voir src/lib/csp.ts) ;
+ * ici, les en-têtes statiques applicables à toutes les réponses, PDF compris.
  */
 const securityHeaders = [
-  {
-    key: "Content-Security-Policy",
-    value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
-  },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

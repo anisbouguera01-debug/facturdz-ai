@@ -6,10 +6,14 @@ import type { Permission } from "@/lib/permissions";
 import { getCurrentSession, requireSession } from "@/server/auth/session";
 import { getDb } from "@/server/db/client";
 import { AppError } from "@/server/errors";
+import { consumeRateLimit } from "@/server/security/rate-limit";
 import type { Actor } from "@/server/services/organizations";
 import { assertPermission, resolveTenantContext, type ResolveResult } from "./resolve";
 
 export type { TenantContext } from "./resolve";
+
+/** Plafond d'opérations d'écriture par utilisateur et par minute (usage normal : bien en dessous). */
+export const WRITES_PER_MINUTE = 120;
 
 const resolveForRequest = cache(async (): Promise<ResolveResult | null> => {
   const session = await getCurrentSession();
@@ -44,6 +48,18 @@ export async function requireTenant(permission?: Permission) {
     throw new AppError("FORBIDDEN", "Créez ou rejoignez une entreprise pour continuer.");
   }
   if (permission) assertPermission(result.context, permission);
+  // Freinage des abus : toute opération d'écriture (permission non « :read ») est limitée par
+  // utilisateur ; les lectures simples (PDF, exports) ont leur limite propre dans leur route.
+  if (permission && !permission.endsWith(":read")) {
+    await consumeRateLimit(
+      "write:user",
+      result.context.userId,
+      WRITES_PER_MINUTE,
+      60,
+      undefined,
+      "Trop d'opérations en peu de temps. Réessayez dans une minute.",
+    );
+  }
   return result.context;
 }
 

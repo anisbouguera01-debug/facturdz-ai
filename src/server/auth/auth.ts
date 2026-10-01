@@ -96,6 +96,7 @@ export function createAuth({ db, secret, baseURL, rateLimit = true }: AuthConfig
     advanced: {
       cookiePrefix: "facturdz",
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
+      useSecureCookies: baseURL.startsWith("https://"),
     },
 
     databaseHooks: {

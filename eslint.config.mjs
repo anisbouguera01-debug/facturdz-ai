@@ -4,7 +4,7 @@ import nextTs from "eslint-config-next/typescript";
 
 /**
  * Règles d'architecture FacturDZ, imposées par le lint plutôt que par convention :
- * 1. `process.env` n'est lu que dans src/server/env.ts et src/server/logger.ts
+ * 1. `process.env` n'est lu que dans src/server/env.ts, src/server/logger.ts et src/proxy.ts (NODE_ENV)
  *    (exception : NEXT_PUBLIC_*, publiques par définition).
  * 2. Les SDK IA ne sont importés que dans src/server/ai/providers.
  * 3. Le client Prisma généré n'est importé que dans src/server/db.
@@ -47,7 +47,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["src/server/env.ts", "src/server/logger.ts"],
+    files: ["src/server/env.ts", "src/server/logger.ts", "src/proxy.ts"],
     rules: { "no-restricted-syntax": "off" },
   },
   {

@@ -48,7 +48,14 @@ export async function runAI<R, T>(
   };
 
   try {
-    await consumeRateLimit("ai:user", ctx.userId, AI_REQUESTS_PER_MINUTE, 60);
+    await consumeRateLimit(
+      "ai:user",
+      ctx.userId,
+      AI_REQUESTS_PER_MINUTE,
+      60,
+      undefined,
+      "Trop de demandes à l'assistant. Réessayez dans une minute.",
+    );
   } catch (error) {
     await ctx.db.aIUsage.create({
       data: { ...base, latencyMs: 0, status: "REJECTED_LIMIT", errorCode: "RATE_LIMITED" },

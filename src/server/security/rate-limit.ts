@@ -13,6 +13,7 @@ export async function consumeRateLimit(
   limit: number,
   windowSeconds: number,
   now: Date = new Date(),
+  message = "Trop de demandes. Réessayez dans une minute.",
 ): Promise<void> {
   const windowStart = Math.floor(now.getTime() / 1000 / windowSeconds);
   const key = `${scope}:${id}:${windowStart}`;
@@ -29,9 +30,6 @@ export async function consumeRateLimit(
       .catch(() => undefined);
   }
   if ((rows[0]?.count ?? 1) > limit) {
-    throw new AppError(
-      "RATE_LIMITED",
-      "Trop de demandes à l'assistant. Réessayez dans une minute.",
-    );
+    throw new AppError("RATE_LIMITED", message);
   }
 }

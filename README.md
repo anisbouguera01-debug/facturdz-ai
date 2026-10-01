@@ -143,4 +143,5 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 | 15    | Usage et coûts IA (tarifs saisis, jamais inventés)    | ✅      |
 | 16    | Plans et limites (factures, devis, IA, abonnement)    | ✅      |
 | 17    | Panneau d'administration de la plateforme             | ✅      |
-| 18–21 | Sécurité, tests, landing, production                  | à faire |
+| 18    | Sécurité (CSP nonce, débit, garde-fous, audit deps)   | ✅      |
+| 19–21 | Tests, landing, production                            | à faire |

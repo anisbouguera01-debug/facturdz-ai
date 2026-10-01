@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
+import { connection } from "next/server";
 
 export const metadata: Metadata = {
   title: {
@@ -22,7 +23,10 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Rendu dynamique obligatoire : le nonce CSP change à chaque requête (une page prérendue
+  // statiquement ne pourrait pas le porter et ses scripts seraient bloqués).
+  await connection();
   return (
     <html lang="fr" className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>

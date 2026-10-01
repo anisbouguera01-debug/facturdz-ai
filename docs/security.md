@@ -130,3 +130,46 @@ directement (en-tête `Next-Action`, sans passer par l'interface) sur le build d
   clients, lignes, montants ni prompts. Il ne peut ni suspendre un autre admin ni se suspendre.
 - Toute écriture (abonnement, plan, limite, tarif IA, suspension) est inscrite au journal
   d'activité (`admin.*`, utilisateur, IP, user-agent) dans la même transaction.
+
+## Durcissement (Phase 18)
+
+- **CSP stricte avec nonce** (`src/lib/csp.ts`, posée par `src/proxy.ts` à chaque requête) :
+  `script-src 'self' 'nonce-…' 'strict-dynamic'`, aucun script inline ni `eval` en production,
+  `frame-ancestors/object-src 'none'`, aucune ressource tierce. Compromis assumé : `style-src`
+  garde `'unsafe-inline'` (attributs `style` injectés par Next.js). Conséquence : toutes les pages
+  sont rendues dynamiquement (`connection()` dans le layout racine). Les routes PDF sont exclues
+  de la CSP (document sans script ; les lecteurs PDF intégrés s'y bloquent) mais gardent les autres
+  en-têtes (`nosniff`, `no-store`, HSTS…).
+- **Limitation de débit** (table `rate_limit_buckets`, atomique, multi-instances) : écritures
+  60 s × 120 par utilisateur (centralisé dans `requireTenant` pour toute permission non `:read`),
+  PDF 20/min, administration 60/min, IA 20/min (existant), authentification par Better Auth
+  (connexion 5/min, inscription 5/10 min, réinitialisation 3/10 min).
+- **CSRF** : server actions protégées par le contrôle Origin/Host natif de Next.js ; Better Auth
+  n'accepte que l'origine de l'application (`trustedOrigins`) ; cookies `httpOnly`, `SameSite=Lax`,
+  `Secure` explicite dès que l'URL est en HTTPS.
+- **Garde statique** (`tests/unit/security-guards.test.ts`) : chaque server action et chaque route
+  doit appeler `requireTenant/requireSuperAdmin/requireSession/currentActor` ; `requireTenant()`
+  sans permission est interdit dans les actions. Ajouter une action sans contrôle fait échouer
+  les tests.
+- **Dépendances** : `pnpm audit --prod` propre ; deux alertes transitives de la CLI Prisma
+  (`mysql2`, `deepmerge-ts`) corrigées par `pnpm.overrides`. À relancer avant chaque mise en prod.
+
+### Décision : RLS PostgreSQL (non activé pour l'instant)
+
+L'isolation repose aujourd'hui sur : extension Prisma `forTenant` (filtre `organizationId` forcé
+sur chaque requête, SQL brut interdit sur le client tenant), clés étrangères composites
+`(id, organizationId)`, et tests d'isolation. Le RLS ajouterait une seconde barrière dans la base
+(`SET LOCAL app.org_id` par transaction + politiques `USING (organizationId = current_setting(…))`).
+Il n'est PAS activé car il impose : un rôle applicatif distinct du propriétaire des tables
+(sinon le propriétaire contourne les politiques), une transaction par requête pour porter le
+paramètre, et il a un coût de performance et de complexité des migrations. Ce n'est pas anodin à
+brancher sans pouvoir le tester sur l'hébergement final. **Recommandation** : l'activer en
+Phase 21 avec le rôle de base de production, en défense en profondeur, une fois l'hébergeur
+choisi. Les tests d'isolation existants serviraient alors de filet de non-régression.
+
+### Limites connues
+
+- Pas de limitation par IP avant authentification en dehors des routes Better Auth (à compléter
+  derrière le CDN/WAF de production).
+- Pas de 2FA ni de politique de mot de passe au-delà de la validation actuelle.
+- Les en-têtes `x-forwarded-for` ne sont fiables que derrière un proxy de confiance (production).

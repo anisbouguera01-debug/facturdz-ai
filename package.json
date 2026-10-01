@@ -71,5 +71,11 @@
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=22"
+  },
+  "pnpm": {
+    "overrides": {
+      "mysql2": ">=3.23.1",
+      "deepmerge-ts": ">=8.0.0"
+    }
   }
 }
