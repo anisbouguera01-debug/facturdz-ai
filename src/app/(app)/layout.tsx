@@ -3,15 +3,18 @@ import { AppNav, type NavItem } from "@/components/layout/app-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { SignOutButton } from "@/components/layout/sign-out-button";
+import { can, type Permission } from "@/lib/permissions";
 import { requireTenantPage } from "@/server/tenant/context";
 
 /**
  * Sections disponibles. Chaque phase ajoute la sienne ici
  * (Factures, Devis, Clients, Produits, Paiements, FacturDZ AI, Rapports, Paramètres).
  */
-const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: (NavItem & { permission?: Permission })[] = [
   { href: "/dashboard", label: "Tableau de bord" },
-  { href: "/customers", label: "Clients" },
+  { href: "/customers", label: "Clients", permission: "customers:read" },
+  { href: "/products", label: "Produits", permission: "products:read" },
+  { href: "/settings", label: "Paramètres", permission: "settings:manage" },
 ];
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -21,6 +24,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     organizationName: context.organizationName,
     role: context.role,
   };
+  // Une entrée n'apparaît que si le rôle y a accès (le serveur revérifie de toute façon).
+  const navItems = NAV_ITEMS.filter((i) => !i.permission || can(context.role, i.permission)).map(
+    ({ href, label }) => ({ href, label }),
+  );
   const switcher = <OrganizationSwitcher current={current} memberships={memberships} />;
 
   return (
@@ -32,7 +39,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         </Link>
         <div className="mt-6 px-3">{switcher}</div>
         <div className="mt-6 flex-1">
-          <AppNav items={NAV_ITEMS} />
+          <AppNav items={navItems} />
         </div>
         <div className="grid gap-2 px-3">
           <Link
@@ -50,7 +57,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <Link href="/dashboard" className="font-semibold tracking-tight">
           FacturDZ <span className="text-primary">AI</span>
         </Link>
-        <MobileNav items={NAV_ITEMS}>
+        <MobileNav items={navItems}>
           {switcher}
           <div className="mt-3 flex items-center justify-between gap-3">
             <Link

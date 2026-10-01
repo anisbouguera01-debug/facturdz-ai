@@ -216,7 +216,13 @@ export async function deleteCustomer(ctx: Ctx, id: string) {
       "Ce client a des devis ou des factures : archivez-le plutôt que de le supprimer.",
     );
   }
-  await ctx.db.customer.delete({ where: { id: customerId } });
+  await ctx.db.customer.delete({ where: { id: customerId } }).catch((error: unknown) => {
+    // Document créé entre la vérification et la suppression : la clé étrangère protège.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      throw new AppError("CONFLICT", "Ce client vient de recevoir un document : archivez-le.");
+    }
+    throw error;
+  });
   await recordAudit(ctx.db, {
     organizationId: ctx.organizationId,
     userId: ctx.userId,

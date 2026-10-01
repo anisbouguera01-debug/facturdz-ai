@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CustomerActions } from "@/components/layout/customer-actions";
+import { deleteCustomerAction, setCustomerArchivedAction } from "@/app/(app)/customers/actions";
+import { RecordActions } from "@/components/layout/record-actions";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -114,11 +115,26 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
               </p>
             </div>
           ) : null}
-          <CustomerActions
-            id={customer.id}
-            archived={Boolean(customer.archivedAt)}
-            canArchive={canWrite}
-            canDelete={can(context.role, "customers:delete")}
+          <RecordActions
+            toggle={
+              canWrite
+                ? {
+                    label: customer.archivedAt ? "Restaurer le client" : "Archiver le client",
+                    action: setCustomerArchivedAction.bind(null, customer.id, !customer.archivedAt),
+                  }
+                : undefined
+            }
+            remove={
+              can(context.role, "customers:delete")
+                ? {
+                    confirmText:
+                      "Supprimer définitivement ce client ? C'est impossible s'il a déjà des devis ou des factures : archivez-le dans ce cas.",
+                    keepLabel: "Garder le client",
+                    action: deleteCustomerAction.bind(null, customer.id),
+                    redirectTo: "/customers",
+                  }
+                : undefined
+            }
           />
         </section>
 

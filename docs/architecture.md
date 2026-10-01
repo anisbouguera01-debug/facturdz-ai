@@ -93,9 +93,20 @@ Chaque module suit le même découpage (exemple : clients, Phase 5) :
 
 ## Montants
 
+- Module unique `src/lib/money.ts` (decimal.js, partagé navigateur/serveur) : `round2`,
+  `vatAmount`, `ttcFromHt`, schémas Zod `moneySchema` (saisie française « 1 250,50 »
+  acceptée, 2 décimales, 12 chiffres entiers max) et `ratePercentSchema` (0 à 100 %).
+- Arrondi **demi-supérieur au centime**, centralisé dans ce module (à ajuster ici si une
+  règle fiscale vérifiée l'exige).
+- Les aperçus calculés dans le navigateur (prix TTC d'un produit) ne sont jamais
+  enregistrés : le serveur revalide et recalcule.
 - Stockage `Decimal(14,2)`, calculs avec `Prisma.Decimal` / decimal.js, jamais de `number`.
 - Tous les totaux sont recalculés côté serveur ; ceux envoyés par le client sont ignorés.
-- Aucun taux de TVA codé en dur : table `TaxRate` par organisation.
+- Aucun taux de TVA codé en dur : table `TaxRate` par organisation, saisie par l'entreprise
+  dans Paramètres → TVA ; une nouvelle entreprise démarre sans taux. Un seul taux par défaut.
+- Produits et lignes de documents stockent la **valeur** du taux : modifier ou désactiver un
+  taux ne change jamais un document existant. Un produit ne peut utiliser qu'un taux actif
+  de l'entreprise (il peut garder son taux actuel s'il a été désactivé depuis).
 
 ## Factures
 

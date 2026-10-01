@@ -20,7 +20,16 @@ export type AuditAction =
   | "customer.updated"
   | "customer.archived"
   | "customer.restored"
-  | "customer.deleted";
+  | "customer.deleted"
+  | "product.created"
+  | "product.updated"
+  | "product.deactivated"
+  | "product.reactivated"
+  | "product.deleted"
+  | "tax_rate.created"
+  | "tax_rate.updated"
+  | "tax_rate.deactivated"
+  | "tax_rate.reactivated";
 
 export interface AuditEntry {
   organizationId: string | null;
