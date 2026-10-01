@@ -17,6 +17,12 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "better-auth/crypto";
 import { addDays, todayISO } from "../src/lib/dates";
 import { forTenant } from "../src/server/db/tenant";
+import {
+  cancelInvoice,
+  createInvoice,
+  createInvoiceFromQuote,
+  issueInvoice,
+} from "../src/server/services/invoices";
 import { createQuote, respondToQuote, sendQuote } from "../src/server/services/quotes";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 import type { LimitKey } from "../src/generated/prisma/enums";
@@ -296,12 +302,45 @@ async function main() {
       }
     }
 
+    // Factures : conversion du devis accepté, puis factures émises (certaines en retard),
+    // un brouillon et une annulation. Les paiements seront ajoutés en Phase 9.
+    const accepted = await db.quote.findFirstOrThrow({
+      where: { organizationId: org.id, status: "ACCEPTED" },
+    });
+    const converted = await createInvoiceFromQuote(ctx, accepted.id);
+    await issueInvoice(ctx, converted.id);
+    const invoicePlans = [
+      { c: 1, days: -50, due: 30, lines: [lineOf(2, "6")], action: "ISSUE" },
+      { c: 5, days: -35, due: 15, lines: [lineOf(4, "2"), lineOf(8, "1")], action: "ISSUE" },
+      { c: 6, days: -10, due: 30, lines: [lineOf(10, "3", "5")], action: "ISSUE" },
+      { c: 7, days: -3, due: 30, lines: [lineOf(13, "20")], action: "ISSUE" },
+      { c: 8, days: -25, due: 30, lines: [lineOf(1, "1")], action: "CANCEL" },
+      { c: 9, days: -1, due: 30, lines: [lineOf(15, "2")], action: "ISSUE" },
+      { c: 2, days: 0, due: 30, lines: [lineOf(6, "5")], action: "DRAFT" },
+      { c: 3, days: 0, due: 30, lines: [lineOf(16, "1"), lineOf(17, "2")], action: "DRAFT" },
+      { c: 0, days: -5, due: 30, lines: [lineOf(18, "1")], action: "ISSUE" },
+    ] as const;
+    for (const plan of invoicePlans) {
+      const issueDate = addDays(today, plan.days);
+      const inv = await createInvoice(ctx, {
+        customerId: customers[plan.c].id,
+        issueDate,
+        dueDate: addDays(issueDate, plan.due),
+        terms: "Paiement par virement ou chèque. Données de démonstration.",
+        items: [...plan.lines],
+      });
+      if (plan.action === "DRAFT") continue;
+      await issueInvoice(ctx, inv.id);
+      if (plan.action === "CANCEL") await cancelInvoice(ctx, inv.id);
+    }
+
     const counts = {
       plans: await db.subscriptionPlan.count(),
       customers: await db.customer.count({ where: { organizationId: org.id } }),
       products: await db.product.count({ where: { organizationId: org.id } }),
       members: await db.organizationMember.count({ where: { organizationId: org.id } }),
       quotes: await db.quote.count({ where: { organizationId: org.id } }),
+      invoices: await db.invoice.count({ where: { organizationId: org.id } }),
     };
     console.log(
       `✔ Seed terminé — organisation « ${org.name} »\n` +

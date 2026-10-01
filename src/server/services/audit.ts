@@ -36,7 +36,14 @@ export type AuditAction =
   | "quote.accepted"
   | "quote.rejected"
   | "quote.duplicated"
-  | "quote.deleted";
+  | "quote.deleted"
+  | "quote.converted"
+  | "invoice.created"
+  | "invoice.updated"
+  | "invoice.issued"
+  | "invoice.cancelled"
+  | "invoice.deleted"
+  | "invoice.created_from_quote";
 
 export interface AuditEntry {
   organizationId: string | null;

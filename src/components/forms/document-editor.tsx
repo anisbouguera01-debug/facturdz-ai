@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch, type FieldPath } from "react-hook-form";
+import { createInvoiceAction, updateInvoiceAction } from "@/app/(app)/invoices/actions";
 import { createQuoteAction, updateQuoteAction } from "@/app/(app)/quotes/actions";
 import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
@@ -14,7 +15,7 @@ import { formatRate } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 /**
- * Éditeur de document (devis ; factures en Phase 8).
+ * Éditeur de document (devis et factures).
  * Les totaux affichés sont un APERÇU calculé avec le même moteur que le serveur ;
  * le serveur revalide et recalcule tout à l'enregistrement.
  */
@@ -61,6 +62,18 @@ const KINDS = {
     update: updateQuoteAction,
     path: "/quotes",
     submit: { create: "Enregistrer le brouillon", update: "Enregistrer les modifications" },
+    termsLabel: "Conditions",
+    termsPlaceholder: "Ex. délai de livraison, modalités de paiement",
+  },
+  invoice: {
+    secondDateLabel: "Échéance",
+    secondDateKey: "dueDate",
+    create: createInvoiceAction,
+    update: updateInvoiceAction,
+    path: "/invoices",
+    submit: { create: "Enregistrer le brouillon", update: "Enregistrer les modifications" },
+    termsLabel: "Conditions de règlement",
+    termsPlaceholder: "Ex. paiement à 30 jours, par virement ou chèque",
   },
 } as const;
 
@@ -385,12 +398,12 @@ export function DocumentEditor({
           </div>
           <div className="grid gap-1.5">
             <label htmlFor="terms" className="text-sm font-medium">
-              Conditions
+              {cfg.termsLabel}
             </label>
             <Textarea
               id="terms"
               rows={3}
-              placeholder="Ex. délai de livraison, modalités de paiement"
+              placeholder={cfg.termsPlaceholder}
               {...register("terms")}
             />
           </div>

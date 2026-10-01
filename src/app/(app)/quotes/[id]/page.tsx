@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ConvertQuoteButton } from "@/components/layout/convert-quote-button";
 import { DocumentView } from "@/components/layout/document-view";
 import { QuoteActions } from "@/components/layout/quote-actions";
 import { QuoteStatusBadge } from "@/components/layout/quote-status-badge";
@@ -49,6 +50,23 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
           canDelete={can(context.role, "quotes:delete")}
         />
       </div>
+
+      {quote.status === "ACCEPTED" && can(context.role, "invoices:create") ? (
+        <div className="mt-4 rounded-lg border bg-muted/40 p-4">
+          <p className="mb-3 text-sm">
+            Devis accepté : créez la facture correspondante (brouillon, avec les mêmes lignes).
+          </p>
+          <ConvertQuoteButton quoteId={quote.id} />
+        </div>
+      ) : null}
+      {quote.invoice && can(context.role, "invoices:read") ? (
+        <p className="mt-4 text-sm">
+          Facture liée :{" "}
+          <Link href={`/invoices/${quote.invoice.id}`} className="font-mono underline">
+            {quote.invoice.invoiceNumber ?? "brouillon"}
+          </Link>
+        </p>
+      ) : null}
 
       <div className="mt-8">
         <DocumentView

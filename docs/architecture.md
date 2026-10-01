@@ -139,7 +139,7 @@ Testé avec 25 envois simultanés.
 ## Devis
 
 - Statuts : brouillon → envoyé → accepté / refusé ; « expiré » est calculé (envoyé et date
-  de validité dépassée, heure d'Alger) ; « facturé » sera posé par la conversion (Phase 8).
+  de validité dépassée, heure d'Alger) ; « facturé » est posé par la conversion en facture (Phase 8).
 - Seul un brouillon se modifie ou se supprime. L'envoi attribue le numéro et fige le devis ;
   pour changer un devis envoyé, on le duplique.
 - Les listes de l'éditeur (clients, produits) sont limitées à 500 entrées ; un sélecteur
@@ -147,12 +147,27 @@ Testé avec 25 envois simultanés.
 
 ## Factures
 
+`src/server/services/invoices.ts` (même découpage que les devis).
+
 - Statuts stockés : `DRAFT`, `ISSUED`, `PARTIALLY_PAID`, `PAID`, `CANCELLED`.
-- `OVERDUE` est **calculé** (échéance passée et reste à payer > 0), jamais stocké.
-- Le numéro est attribué **à l'émission** via `DocumentSequence` (verrou de ligne dans la
-  transaction), avec une contrainte d'unicité `(organizationId, invoiceNumber)`.
-- Une facture émise n'est pas supprimable, seulement annulable.
-- Les informations vendeur et client sont figées dans la facture à l'émission.
+  `OVERDUE` est **calculé** (émise ou payée en partie, échéance dépassée, heure d'Alger),
+  jamais stocké ; les filtres de liste le gèrent aussi côté base.
+- **Brouillon** : modifiable, supprimable, sans numéro. Montants recalculés côté serveur.
+- **Émission** (`invoices:issue`) : une transaction attribue le numéro via `DocumentSequence`
+  (verrou de ligne, numérotation continue, contrainte unique `(organizationId, invoiceNumber)`),
+  fige les coordonnées du vendeur et du client (`sellerSnapshot`, `customerSnapshot`) et
+  verrouille la facture. L'`UPDATE` est conditionné à `status = DRAFT` : deux émissions
+  simultanées de la même facture, une seule réussit.
+- Une facture émise n'est ni modifiable ni supprimable. **Annulation** (`invoices:cancel`) :
+  seulement une facture émise **sans aucun paiement** ; elle reste en base avec son numéro.
+  Une facture déjà encaissée relève d'un avoir (non géré pour l'instant).
+- **Conversion d'un devis accepté** : copie des lignes et totaux déjà calculés du devis dans
+  un brouillon de facture et passage du devis à « facturé », dans une transaction. Une seule
+  facture par devis (contrainte unique `(quoteId, organizationId)` + `UPDATE` conditionné).
+- `amountPaid` et les statuts `PARTIALLY_PAID` / `PAID` seront posés par le module Paiements
+  (Phase 9). La date d'émission est choisie par l'utilisateur : la numérotation suit l'ordre
+  d'émission, pas l'ordre des dates. **À valider avec un comptable** si une chronologie
+  stricte est exigée.
 
 ## Base de données
 
