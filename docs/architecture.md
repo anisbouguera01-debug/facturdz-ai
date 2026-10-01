@@ -215,6 +215,27 @@ Testé avec 25 envois simultanés.
   l'entreprise (NIF, NIS, RC, AI) sont imprimées. **À valider avec un comptable** avant usage
   réel.
 
+## Tableau de bord
+
+`src/server/services/stats.ts` (permission `stats:read` : OWNER, ADMIN, ACCOUNTANT) et
+`src/app/(app)/dashboard/page.tsx`.
+
+- Tous les chiffres sont des **agrégats SQL** via le client tenant (`groupBy` par jour puis
+  regroupement par mois en Decimal) : jamais calculés dans le navigateur, jamais d'une autre
+  entreprise. Montants en chaînes décimales exactes.
+- Définitions : _facturé_ = factures émises / payées en partie / payées (ni brouillon ni
+  annulée), TTC, par date de facture ; _encaissé_ = paiements non annulés, par date de
+  paiement ; _reste à encaisser_ = total − payé des factures ouvertes ; _en retard_ = reste à
+  encaisser dont l'échéance est strictement passée (heure d'Alger).
+- Sans `stats:read` (employé, lecture seule) : page sobre sans chiffre financier.
+- Graphique en SVG rendu côté serveur, sans bibliothèque : une seule échelle, base à zéro,
+  légende, info-bulle par barre, tableau des valeurs. Couleurs `--chart-1` / `--chart-2`
+  validées avec le validateur du skill dataviz (écart daltonisme, contraste, bande de
+  luminosité) en mode clair **et** sombre ; en dessous de 640 px le graphique défile
+  horizontalement plutôt que de rétrécir.
+- Pas de cache : les chiffres sont recalculés à chaque affichage. Si une entreprise a de très
+  gros volumes, prévoir une table d'agrégats mensuels.
+
 ## Base de données
 
 - Schéma : `prisma/schema.prisma`. Client : `src/server/db/client.ts` (Prisma 7 +

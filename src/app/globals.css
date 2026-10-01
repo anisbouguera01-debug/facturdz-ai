@@ -25,6 +25,9 @@
   --ring: #0f6b4f;
   --paper: #f6f7f5;
   --stamp: #3446b8;
+  /* Graphiques : couleurs validées (écart daltonisme, contraste) en clair et en sombre. */
+  --chart-1: #3446b8;
+  --chart-2: #d97706;
   --radius: 0.625rem;
 }
 
@@ -49,6 +52,8 @@
     --ring: #34b38a;
     --paper: #10182a;
     --stamp: #8fa0ff;
+    --chart-1: #6f84ec;
+    --chart-2: #c88418;
   }
 }
 
