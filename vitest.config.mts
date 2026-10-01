@@ -13,6 +13,8 @@ export default defineConfig({
   resolve,
   test: {
     restoreMocks: true,
+    // Logs coupés pendant les tests (les tests qui en dépendent espionnent le logger).
+    env: { LOG_LEVEL: "silent" },
     coverage: { provider: "v8", include: ["src/server/**", "src/lib/**"] },
     projects: [
       {

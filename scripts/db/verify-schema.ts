@@ -63,6 +63,8 @@ function expectedType(f: Field): string {
     String: "text",
     Boolean: "boolean",
     Int: "integer",
+    BigInt: "bigint",
+    Float: "double precision",
     DateTime: "timestamp(3)",
     Json: "jsonb",
     Decimal: "numeric(65,30)",

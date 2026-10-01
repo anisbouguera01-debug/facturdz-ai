@@ -4,7 +4,7 @@ Le logiciel de facturation intelligent pour les entreprises algériennes : clien
 devis, factures, PDF, paiements, tableau de bord et assistant IA (OpenAI / Gemini), en SaaS
 multi-entreprise.
 
-> **État : Phase 2 terminée** (PostgreSQL + Prisma). Voir [Feuille de route](#feuille-de-route).
+> **État : Phase 3 terminée** (authentification). Voir [Feuille de route](#feuille-de-route).
 
 ## Stack
 
@@ -13,7 +13,7 @@ multi-entreprise.
 | Application | Next.js 16 (App Router), React 19, TypeScript strict         |
 | UI          | Tailwind CSS 4, composants shadcn/ui, police Geist           |
 | Base        | PostgreSQL 16, Prisma 7 (adaptateur `pg`, sans moteur natif) |
-| Auth        | Better Auth, sessions en base _(Phase 3)_                    |
+| Auth        | Better Auth : e-mail + mot de passe, sessions en base        |
 | Validation  | Zod 4, React Hook Form                                       |
 | PDF         | @react-pdf/renderer côté serveur _(Phase 10)_                |
 | IA          | Abstraction `AIProvider` → OpenAI / Gemini _(Phases 12–15)_  |
@@ -32,6 +32,13 @@ pnpm db:deploy                  # applique les migrations
 pnpm db:seed                    # données de démonstration fictives
 pnpm dev                        # http://localhost:3000
 ```
+
+Comptes de démonstration créés par le seed (développement uniquement) :
+`owner@demo.facturdz.test` (OWNER) et `comptable@demo.facturdz.test` (ACCOUNTANT),
+mot de passe `Demo-FacturDZ-2026`.
+
+Dans l'environnement cloud de Claude, PostgreSQL peut s'arrêter entre deux sessions :
+`pg_ctlcluster 16 main start`.
 
 ## Base de données
 
@@ -119,7 +126,7 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 | ----- | ------------------------------------------------------------- | ------- |
 | 1     | Architecture + initialisation                                 | ✅      |
 | 2     | PostgreSQL + Prisma                                           | ✅      |
-| 3     | Authentification                                              | à faire |
+| 3     | Authentification                                              | ✅      |
 | 4     | Multi-tenancy                                                 | à faire |
 | 5–11  | Clients, produits, devis, factures, paiements, PDF, dashboard | à faire |
 | 12–15 | FacturDZ AI, OpenAI, Gemini, usage et coûts IA                | à faire |

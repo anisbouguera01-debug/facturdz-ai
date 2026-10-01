@@ -26,8 +26,10 @@
     "test:integration": "vitest run --project integration"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "better-auth": "1.7.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "geist": "^1.7.2",
@@ -37,6 +39,7 @@
     "pino": "^10.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "react-hook-form": "^7.89.0",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5"

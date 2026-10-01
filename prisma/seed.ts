@@ -4,19 +4,22 @@
  * Idempotent : l'organisation de démonstration et ses utilisateurs sont supprimés
  * puis recréés ; plans et limites sont mis à jour en place.
  *
- * Contenu actuel (Phase 2) : plans, 1 organisation, 2 utilisateurs, taux de TVA,
- * 10 clients, 20 produits, compteurs de numérotation.
- * Ajouts prévus : identifiants de connexion (Phase 3), devis/factures/paiements
+ * Contenu actuel : plans, 1 organisation, 2 utilisateurs avec mot de passe
+ * (« Demo-FacturDZ-2026 »), taux de TVA, 10 clients, 20 produits, compteurs.
+ * Ajouts prévus : devis/factures/paiements
  * via les services de calcul (Phases 7–9), logs IA (Phase 15).
  *
  * Refuse de s'exécuter en production.
  */
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPassword } from "better-auth/crypto";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 import type { LimitKey } from "../src/generated/prisma/enums";
 
 const DEMO_SLUG = "demo-sarl-atlas";
+// Mot de passe des comptes de démonstration (développement uniquement).
+const DEMO_PASSWORD = "Demo-FacturDZ-2026";
 
 // Valeurs d'exemple reprises du cahier des charges ; modifiables en base, jamais codées ailleurs.
 // null = illimité.
@@ -184,7 +187,11 @@ async function main() {
       },
     });
 
-    // Utilisateurs (les identifiants de connexion seront ajoutés en Phase 3).
+    // Utilisateurs avec identifiants de connexion (mot de passe haché comme Better Auth).
+    const passwordHash = await hashPassword(DEMO_PASSWORD);
+    const credential = (userId: string) => ({
+      create: { accountId: userId, providerId: "credential", password: passwordHash },
+    });
     const owner = await db.user.create({
       data: {
         email: "owner@demo.facturdz.test",
@@ -195,7 +202,8 @@ async function main() {
         memberships: { create: { organizationId: org.id, role: "OWNER" } },
       },
     });
-    await db.user.create({
+    await db.user.update({ where: { id: owner.id }, data: { accounts: credential(owner.id) } });
+    const accountant = await db.user.create({
       data: {
         email: "comptable@demo.facturdz.test",
         emailVerified: true,
@@ -204,6 +212,10 @@ async function main() {
         lastName: "Demo",
         memberships: { create: { organizationId: org.id, role: "ACCOUNTANT" } },
       },
+    });
+    await db.user.update({
+      where: { id: accountant.id },
+      data: { accounts: credential(accountant.id) },
     });
 
     await db.customer.createMany({
@@ -239,7 +251,9 @@ async function main() {
       members: await db.organizationMember.count({ where: { organizationId: org.id } }),
     };
     console.log(
-      `✔ Seed terminé — organisation « ${org.name} », propriétaire ${owner.email}`,
+      `✔ Seed terminé — organisation « ${org.name} »\n` +
+        `  Connexion : ${owner.email} (OWNER) ou ${accountant.email} (ACCOUNTANT)\n` +
+        `  Mot de passe : ${DEMO_PASSWORD}`,
       counts,
     );
   } finally {
