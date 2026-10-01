@@ -1,29 +1,36 @@
 import type { Metadata } from "next";
-import { SignOutButton } from "@/components/layout/sign-out-button";
-import { requireSession } from "@/server/auth/session";
+import { ROLE_LABELS } from "@/lib/permissions";
+import { requireTenantPage } from "@/server/tenant/context";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
-// Page provisoire (Phase 3). L'organisation et l'onboarding arrivent en Phase 4,
-// le vrai tableau de bord en Phase 11.
+// Page provisoire : le vrai tableau de bord (chiffre d'affaires, impayés, graphiques)
+// arrive en Phase 11. Elle sert ici à vérifier le contexte d'entreprise.
 export default async function DashboardPage() {
-  const { user } = await requireSession("/dashboard");
+  const { context } = await requireTenantPage("/dashboard");
+  const [customers, products] = await Promise.all([
+    context.db.customer.count(),
+    context.db.product.count(),
+  ]);
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:py-16">
-      <header className="flex items-center justify-between gap-4">
-        <p className="text-base font-semibold tracking-tight">
-          FacturDZ <span className="text-primary">AI</span>
-        </p>
-        <SignOutButton />
-      </header>
-      <h1 className="mt-12 text-2xl font-semibold tracking-tight sm:text-3xl">
-        Bonjour {user.firstName ?? user.name}
+    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8 sm:py-12">
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        {context.organizationName}
       </h1>
       <p className="mt-2 text-muted-foreground">
-        Vous êtes connecté avec {user.email}. La configuration de votre entreprise arrive à la
-        prochaine étape.
+        Vous êtes connecté en tant que {ROLE_LABELS[context.role].toLowerCase()}.
       </p>
+      <dl className="mt-8 grid max-w-md grid-cols-2 gap-4">
+        <div className="rounded-lg border p-4">
+          <dt className="text-sm text-muted-foreground">Clients</dt>
+          <dd className="mt-1 font-mono text-2xl tabular-nums">{customers}</dd>
+        </div>
+        <div className="rounded-lg border p-4">
+          <dt className="text-sm text-muted-foreground">Produits et services</dt>
+          <dd className="mt-1 font-mono text-2xl tabular-nums">{products}</dd>
+        </div>
+      </dl>
     </main>
   );
 }

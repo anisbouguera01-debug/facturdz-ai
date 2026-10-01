@@ -35,15 +35,42 @@ accède aux données et aux secrets, et il renvoie des objets minimaux (DTO) aux
 
 Base partagée, colonne `organizationId` sur chaque table métier. Trois niveaux de défense :
 
-1. `getTenantContext()` reconstruit `{ userId, organizationId, role }` à partir de la
-   session **et vérifie l'appartenance en base à chaque requête**. Un identifiant venant du
-   client n'est jamais une preuve d'autorisation.
-2. Les repositories exigent ce contexte et filtrent toujours par `organizationId`.
-3. Les relations entre objets d'une même organisation utilisent des clés étrangères
-   composites `(id, organizationId)` : PostgreSQL refuse une facture liée au client d'une
-   autre organisation.
+1. **Contexte tenant** (`src/server/tenant/`) : `resolveTenantContext()` reconstruit
+   `{ userId, organizationId, role, permissions, db }` à partir de la session **et
+   revérifie l'appartenance en base à chaque requête**. L'organisation active stockée
+   dans la session n'est qu'une préférence : si elle désigne une organisation dont
+   l'utilisateur n'est pas (ou plus) membre, elle est ignorée et corrigée.
+2. **Client de données tenant** (`src/server/db/tenant.ts`, `forTenant`) : extension
+   Prisma qui ajoute `organizationId` en **ET** à toute lecture, modification et
+   suppression, l'impose à toute création, interdit de le changer, et refuse l'accès aux
+   tables globales. Un enregistrement d'une autre organisation est introuvable.
+3. **Base de données** : clés étrangères composites `(id, organizationId)` ; PostgreSQL
+   refuse une facture liée au client d'une autre organisation.
 
 Row-Level Security PostgreSQL : envisagée en Phase 18 comme défense supplémentaire.
+
+### Règles d'usage
+
+| Où                         | Utiliser                                                                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Page (Server Component)    | `requireTenantPage()` → redirige vers `/login` ou `/onboarding`                                                        |
+| Server action / route      | `requireTenant("permission")` en **première ligne**, puis `ctx.db`                                                     |
+| Données d'une organisation | toujours `ctx.db` (client tenant)                                                                                      |
+| Client global `getDb()`    | uniquement dans les services qui touchent des tables globales (utilisateurs, sessions, plans), avec contrôle explicite |
+
+Le proxy ne protège pas les server actions : chacune vérifie elle-même session et permission.
+
+### Rôles
+
+Matrice dans `src/lib/permissions.ts`, testée dans `tests/unit/permissions.test.ts`.
+
+| Rôle       | Résumé                                                                                                                                 |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| OWNER      | Tout, dont suppression de l'entreprise et abonnement                                                                                   |
+| ADMIN      | Tout sauf suppression de l'entreprise et abonnement                                                                                    |
+| ACCOUNTANT | Facturation complète (émettre, annuler), paiements, statistiques, IA ; pas de gestion des membres ni des paramètres ; ne supprime rien |
+| EMPLOYEE   | Clients, devis, brouillons de factures, IA ; n'émet pas, n'encaisse pas, pas de statistiques                                           |
+| VIEWER     | Lecture seule, sans IA                                                                                                                 |
 
 ## Montants
 

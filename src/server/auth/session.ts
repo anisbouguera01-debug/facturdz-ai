@@ -31,6 +31,8 @@ export const getCurrentSession = cache(async (): Promise<CurrentSession | null> 
   const result = await getAuth().api.getSession({ headers: await headers() });
   if (!result) return null;
   const u = result.user;
+  // Un compte suspendu après sa connexion perd l'accès dès la requête suivante.
+  if (u.status === "SUSPENDED") return null;
   return {
     user: {
       id: u.id,

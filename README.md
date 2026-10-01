@@ -4,7 +4,7 @@ Le logiciel de facturation intelligent pour les entreprises algériennes : clien
 devis, factures, PDF, paiements, tableau de bord et assistant IA (OpenAI / Gemini), en SaaS
 multi-entreprise.
 
-> **État : Phase 3 terminée** (authentification). Voir [Feuille de route](#feuille-de-route).
+> **État : Phase 4 terminée** (multi-entreprise, rôles). Voir [Feuille de route](#feuille-de-route).
 
 ## Stack
 
@@ -106,8 +106,9 @@ src/
 │  ├─ env.ts            variables d'environnement validées
 │  ├─ errors.ts         AppError, erreurs publiques, safeAction
 │  ├─ logger.ts         pino + masquage des secrets
-│  ├─ auth/ tenant/     session, contexte d'organisation, permissions
-│  ├─ db/               client Prisma (client.ts) + repositories tenant-scopés
+│  ├─ auth/             Better Auth, session courante
+│  ├─ tenant/           contexte d'entreprise, vérification des permissions
+│  ├─ db/               client Prisma global (client.ts) et limité à une entreprise (tenant.ts)
 │  ├─ services/         logique métier (calculs, numérotation, audit)
 │  ├─ ai/               providers, outils, schémas, prompts, usage
 │  ├─ pdf/ plans/ security/
@@ -127,7 +128,7 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 | 1     | Architecture + initialisation                                 | ✅      |
 | 2     | PostgreSQL + Prisma                                           | ✅      |
 | 3     | Authentification                                              | ✅      |
-| 4     | Multi-tenancy                                                 | à faire |
+| 4     | Multi-tenancy                                                 | ✅      |
 | 5–11  | Clients, produits, devis, factures, paiements, PDF, dashboard | à faire |
 | 12–15 | FacturDZ AI, OpenAI, Gemini, usage et coûts IA                | à faire |
 | 16–21 | Plans, admin, sécurité, tests, landing, production            | à faire |

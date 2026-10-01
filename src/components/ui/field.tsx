@@ -36,7 +36,7 @@ export function Field({ id, label, error, hint, children, className }: FieldProp
 }
 
 /** Attributs ARIA à poser sur le champ contrôlé par <Field>. */
-export function fieldAria(id: string, error?: string, hint?: string) {
-  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+export function fieldAria(id: string, error?: string, hasHint?: string | boolean) {
+  const describedBy = error ? `${id}-error` : hasHint ? `${id}-hint` : undefined;
   return { id, "aria-invalid": error ? true : undefined, "aria-describedby": describedBy };
 }

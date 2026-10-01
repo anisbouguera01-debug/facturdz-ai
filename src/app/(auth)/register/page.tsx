@@ -7,7 +7,7 @@ import { getCurrentSession } from "@/server/auth/session";
 export const metadata: Metadata = { title: "Créer un compte" };
 
 export default async function RegisterPage() {
-  if (await getCurrentSession()) redirect("/dashboard");
+  if (await getCurrentSession()) redirect("/onboarding");
 
   return (
     <>

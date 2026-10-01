@@ -37,10 +37,22 @@ Vérifié en HTTP sur le build de production : redirection sans session, connexi
 
 À ajouter avec un fournisseur d'e-mail : vérification d'adresse, réinitialisation du mot de passe.
 
+## Isolation des entreprises (Phase 4)
+
+Détails dans `docs/architecture.md` (Multi-tenant). Tests : `tests/integration/tenant-db.test.ts`,
+`tests/integration/tenant-context.test.ts`, `tests/unit/permissions.test.ts`.
+
+- Appartenance revérifiée en base à chaque requête ; une organisation active falsifiée
+  dans la session est ignorée et corrigée (vérifié en HTTP sur le build de production).
+- Client de données limité à une organisation : lecture, modification, suppression et
+  création impossibles hors de l'organisation courante.
+- Changement d'organisation refusé si l'utilisateur n'est pas membre, sans révéler si
+  l'organisation existe.
+- Compte suspendu : accès coupé dès la requête suivante, même avec une session ouverte.
+- Journal d'audit (`audit_logs`) : création d'entreprise, changement d'organisation.
+
 ## Prévu
 
-- **Phase 4** : contexte tenant vérifié à chaque requête, contrôle
-  `resource.organizationId === ctx.organizationId`, clés étrangères composites.
 - **Phase 18** : CSP stricte avec nonce, rate limiting applicatif (IA, API), journal de
   sécurité, Row-Level Security PostgreSQL (optionnel).
 

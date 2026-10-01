@@ -35,7 +35,7 @@ export function RegisterForm() {
       setFormError(authErrorMessage(error, "register"));
       return;
     }
-    router.replace("/dashboard");
+    router.replace("/onboarding");
     router.refresh();
   });
 

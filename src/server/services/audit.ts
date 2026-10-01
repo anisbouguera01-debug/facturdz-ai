@@ -1,0 +1,57 @@
+import "server-only";
+import type { Prisma } from "@/server/db/client";
+import { logger } from "@/server/logger";
+
+/**
+ * Journal d'activité (AuditLog).
+ * - Ne jamais y mettre de secret, de mot de passe, ni le contenu complet d'un document :
+ *   seulement des identifiants et un résumé utile (ex. numéro de facture, montant).
+ * - Un échec d'écriture du journal ne doit pas faire échouer l'action métier,
+ *   sauf si on l'appelle dans la même transaction (alors il fait partie de l'action).
+ */
+export type AuditAction =
+  | "organization.created"
+  | "organization.updated"
+  | "organization.switched"
+  | "member.added"
+  | "member.role_changed"
+  | "member.removed";
+
+export interface AuditEntry {
+  organizationId: string | null;
+  userId: string | null;
+  action: AuditAction;
+  entity?: string;
+  entityId?: string;
+  metadata?: Prisma.InputJsonValue;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+type AuditWriter = {
+  auditLog: { create: (args: { data: Prisma.AuditLogUncheckedCreateInput }) => Promise<unknown> };
+};
+
+export async function recordAudit(
+  db: AuditWriter,
+  entry: AuditEntry,
+  options: { strict?: boolean } = {},
+) {
+  try {
+    await db.auditLog.create({
+      data: {
+        organizationId: entry.organizationId,
+        userId: entry.userId,
+        action: entry.action,
+        entity: entry.entity,
+        entityId: entry.entityId,
+        metadata: entry.metadata,
+        ipAddress: entry.ipAddress ?? undefined,
+        userAgent: entry.userAgent?.slice(0, 300) ?? undefined,
+      },
+    });
+  } catch (error) {
+    if (options.strict) throw error;
+    logger.error({ err: error, action: entry.action }, "Échec d'écriture du journal d'audit");
+  }
+}
