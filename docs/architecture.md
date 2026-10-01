@@ -191,6 +191,30 @@ Testé avec 25 envois simultanés.
 - Les remboursements et avoirs ne sont pas gérés. Aucun frais, timbre ou retenue n'est
   calculé : règles fiscales à valider avant tout ajout.
 
+## PDF
+
+`src/server/pdf/` : `model.ts` (modèle neutre construit à partir des services), `render.ts`
+(rendu A4 avec **pdfkit**), `response.ts` (en-têtes). Routes : `GET /invoices/[id]/pdf` et
+`GET /quotes/[id]/pdf` (`?download=1` force le téléchargement).
+
+- **Dépendance** : pdfkit (pur JavaScript). Retenu plutôt qu'un navigateur headless (lourd,
+  surface d'attaque, indisponible sur beaucoup d'hébergements) ou react-pdf (plus lourd). Il
+  reste hors du bundle (`serverExternalPackages`) ; les polices DejaVu Sans sont embarquées
+  (`src/server/pdf/fonts`, licence dans `FONTS-LICENSE.txt`) pour que les accents et le rendu
+  ne dépendent pas du serveur.
+- **Aucun calcul** : le PDF imprime les montants stockés en base (même source que l'écran).
+  Une facture émise imprime les coordonnées **figées à l'émission**.
+- **Sécurité** : chaque route fait `requireTenant("…:read")` puis lit via le client tenant :
+  sans session redirection vers /login, document d'une autre entreprise = 404. Réponse
+  `Cache-Control: private, no-store`, `nosniff`, nom de fichier assaini.
+- Filigrane « BROUILLON » (brouillons) et « ANNULÉE » (factures annulées), en-tête de tableau
+  répété et « Page x / y » sur les longs documents.
+- **Limites** : pdfkit ne met pas en forme le texte arabe (droite-gauche) ; les noms en
+  alphabet latin sont imprimés correctement. Les mentions légales obligatoires sur une facture
+  algérienne (et le montant en lettres) ne sont pas ajoutées : seules les identités saisies par
+  l'entreprise (NIF, NIS, RC, AI) sont imprimées. **À valider avec un comptable** avant usage
+  réel.
+
 ## Base de données
 
 - Schéma : `prisma/schema.prisma`. Client : `src/server/db/client.ts` (Prisma 7 +

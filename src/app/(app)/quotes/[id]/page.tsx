@@ -42,6 +42,23 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
         {quote.displayStatus === "EXPIRED" ? ", date de validité dépassée" : ""}
       </p>
 
+      <p className="mt-4 flex flex-wrap gap-4 text-sm">
+        <a
+          href={`/quotes/${quote.id}/pdf`}
+          target="_blank"
+          rel="noopener"
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Voir le PDF
+        </a>
+        <a
+          href={`/quotes/${quote.id}/pdf?download=1`}
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Télécharger le PDF
+        </a>
+      </p>
+
       <div className="mt-6">
         <QuoteActions
           id={quote.id}

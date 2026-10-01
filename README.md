@@ -4,7 +4,7 @@ Le logiciel de facturation intelligent pour les entreprises algériennes : clien
 devis, factures, PDF, paiements, tableau de bord et assistant IA (OpenAI / Gemini), en SaaS
 multi-entreprise.
 
-> **État : Phase 9 terminée** (paiements). Voir [Feuille de route](#feuille-de-route).
+> **État : Phase 10 terminée** (PDF). Voir [Feuille de route](#feuille-de-route).
 
 ## Stack
 

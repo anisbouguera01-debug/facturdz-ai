@@ -24,8 +24,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  // pino utilise des workers Node : on le garde hors du bundle serveur.
-  serverExternalPackages: ["pino", "pino-pretty"],
+  // pino (workers Node) et pdfkit (fichiers de données) restent hors du bundle serveur.
+  serverExternalPackages: ["pino", "pino-pretty", "pdfkit"],
+  // Polices embarquées dans les PDF : à inclure dans le déploiement (lues au rendu).
+  outputFileTracingIncludes: { "/**/pdf": ["./src/server/pdf/fonts/**"] },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

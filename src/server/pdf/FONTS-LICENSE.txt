@@ -1,0 +1,4 @@
+DejaVu Sans (DejaVuSans.ttf, DejaVuSans-Bold.ttf) — fonts embedded in generated PDFs.
+Based on Bitstream Vera. Free licence permitting use, copying, embedding and redistribution
+(https://dejavu-fonts.github.io/License.html). Embedding gives accents and the dinar sign
+without depending on fonts installed on the server.
