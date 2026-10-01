@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualite:
+    name: Migrations, typecheck, lint, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: facturdz
+          POSTGRES_PASSWORD: facturdz
+          POSTGRES_DB: facturdz
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U facturdz"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      APP_ENV: development
+      DATABASE_URL: postgresql://facturdz:facturdz@localhost:5432/facturdz
+      TEST_DATABASE_URL: postgresql://facturdz:facturdz@localhost:5432/facturdz_test
+      SHADOW_DATABASE_URL: postgresql://facturdz:facturdz@localhost:5432/facturdz_shadow
+      # Valeurs factices réservées à la CI (aucun secret réel).
+      AUTH_SECRET: ci-only-secret-not-used-anywhere-else-000000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Installer les dépendances (génère aussi le client Prisma)
+        run: pnpm install --frozen-lockfile
+
+      - name: Créer les bases de test et fantôme
+        run: |
+          PGPASSWORD=facturdz psql -h localhost -U facturdz -d facturdz -c "CREATE DATABASE facturdz_test;"
+          PGPASSWORD=facturdz psql -h localhost -U facturdz -d facturdz -c "CREATE DATABASE facturdz_shadow;"
+
+      - name: Valider le schéma Prisma
+        run: pnpm exec prisma validate
+
+      - name: Appliquer les migrations (prisma migrate deploy officiel)
+        run: pnpm exec prisma migrate deploy
+
+      - name: Détecter une dérive entre migrations et schéma
+        run: |
+          set +e
+          pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+          code=$?
+          if [ "$code" -eq 2 ]; then
+            echo "::error::Les migrations ne correspondent pas à prisma/schema.prisma."
+            echo "SQL officiel attendu pour la prochaine migration :"
+            pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script | tee next-migration.sql
+            exit 1
+          fi
+          exit $code
+
+      - name: Publier le SQL attendu en cas de dérive
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-migration-sql
+          path: next-migration.sql
+          if-no-files-found: ignore
+
+      - name: Vérification de schéma maison (identique à l'environnement local)
+        run: pnpm db:verify
+
+      - name: Seed de développement
+        run: pnpm db:seed
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Tests unitaires et d'intégration
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

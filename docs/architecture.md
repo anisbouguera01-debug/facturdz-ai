@@ -60,8 +60,18 @@ Row-Level Security PostgreSQL : envisagée en Phase 18 comme défense supplémen
 - Une facture émise n'est pas supprimable, seulement annulable.
 - Les informations vendeur et client sont figées dans la facture à l'émission.
 
-Le schéma de base proposé est dans `prisma/schema.prisma.proposal` ; il devient le schéma
-officiel en Phase 2.
+## Base de données
+
+- Schéma : `prisma/schema.prisma`. Client : `src/server/db/client.ts` (Prisma 7 +
+  adaptateur `pg`, aucun moteur natif à l'exécution).
+- Relations internes à une organisation : clés composites `(id, organizationId)` avec
+  `ON DELETE NO ACTION`. On ne supprime pas un client ou un produit déjà utilisé dans un
+  document : on l'archive ou le désactive. (`SET NULL` est impossible ici, il viderait
+  aussi `organizationId`.) La suppression d'une organisation supprime tout en cascade.
+- Contraintes `CHECK` en base : montants positifs, taux entre 0 et 100, paiement > 0,
+  numéro présent si et seulement si la facture n'est plus un brouillon.
+- Migrations : voir le README (« Créer une migration »). La CI applique les migrations avec
+  le vrai `prisma migrate deploy` et échoue sur toute dérive avec le schéma.
 
 ## Erreurs
 
