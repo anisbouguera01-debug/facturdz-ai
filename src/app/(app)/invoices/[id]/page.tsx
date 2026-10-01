@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PaymentForm } from "@/components/forms/payment-form";
+import { VoidPaymentButton } from "@/components/layout/void-payment-button";
 import { DocumentView } from "@/components/layout/document-view";
 import { InvoiceActions } from "@/components/layout/invoice-actions";
 import { InvoiceStatusBadge } from "@/components/layout/invoice-status-badge";
@@ -8,6 +10,9 @@ import { can } from "@/lib/permissions";
 import { orNotFound } from "@/server/page-helpers";
 import { getSellerProfile } from "@/server/services/editor-options";
 import { getInvoice } from "@/server/services/invoices";
+import { listInvoicePayments } from "@/server/services/payments";
+import { todayISO } from "@/lib/dates";
+import { PAYMENT_METHOD_LABELS } from "@/lib/validation/payment";
 import { requireTenantPage } from "@/server/tenant/context";
 
 export const metadata: Metadata = { title: "Facture" };
@@ -18,6 +23,11 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
   const invoice = await orNotFound(getInvoice(context, id));
   // Facture émise : coordonnées figées à l'émission ; brouillon : coordonnées actuelles.
   const seller = invoice.sellerSnapshot ?? (await getSellerProfile(context));
+  const canSeePayments = can(context.role, "payments:read");
+  const canPay = can(context.role, "payments:write");
+  const payments =
+    canSeePayments && invoice.status !== "DRAFT" ? await listInvoicePayments(context, id) : [];
+  const acceptsPayment = invoice.status === "ISSUED" || invoice.status === "PARTIALLY_PAID";
   const showPayment = invoice.status !== "DRAFT" && invoice.status !== "CANCELLED";
 
   return (
@@ -82,6 +92,49 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
             {formatMoney(invoice.remaining)}
           </dd>
         </dl>
+      ) : null}
+
+      {payments.length > 0 ? (
+        <section aria-labelledby="payments-title" className="mt-8">
+          <h2 id="payments-title" className="text-base font-semibold">
+            Paiements
+          </h2>
+          <ul className="mt-3 divide-y rounded-lg border text-sm">
+            {payments.map((p) => (
+              <li
+                key={p.id}
+                className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-start"
+              >
+                <div className={p.voided ? "text-muted-foreground line-through" : undefined}>
+                  <span className="font-mono tabular-nums">{formatMoney(p.amount)}</span>
+                  {" · "}
+                  {PAYMENT_METHOD_LABELS[p.method]}
+                  {" · "}
+                  {formatDate(p.paymentDate)}
+                  {p.reference ? ` · ${p.reference}` : ""}
+                  {p.notes ? <span className="block text-xs">{p.notes}</span> : null}
+                </div>
+                <div className="text-right">
+                  {p.voided ? (
+                    <span className="text-xs text-destructive">Annulé : {p.voidReason}</span>
+                  ) : canPay && invoice.status !== "CANCELLED" ? (
+                    <VoidPaymentButton paymentId={p.id} invoiceId={invoice.id} />
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {canPay && acceptsPayment ? (
+        <div className="mt-6">
+          <PaymentForm
+            invoiceId={invoice.id}
+            remaining={formatMoney(invoice.remaining)}
+            today={todayISO()}
+          />
+        </div>
       ) : null}
 
       <div className="mt-8">

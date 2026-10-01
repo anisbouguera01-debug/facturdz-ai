@@ -169,6 +169,28 @@ Testé avec 25 envois simultanés.
   d'émission, pas l'ordre des dates. **À valider avec un comptable** si une chronologie
   stricte est exigée.
 
+## Paiements
+
+`src/server/services/payments.ts`, actions dans `src/app/(app)/payments/actions.ts`.
+
+- Un paiement se rattache à une facture **émise ou payée en partie** (jamais brouillon,
+  annulée ou soldée). Permission `payments:write` (OWNER, ADMIN, ACCOUNTANT).
+- **Pas de surpaiement** : le montant ne dépasse pas le reste à payer ; pas de date future.
+- **Concurrence** : la transaction verrouille d'abord la ligne de la facture (un `UPDATE`
+  conditionné au statut), relit l'état validé, contrôle le reste à payer, insère le paiement,
+  puis **recalcule** `amountPaid` et le statut depuis les paiements non annulés. Dix
+  paiements simultanés ne peuvent donc jamais dépasser le total ensemble.
+- **Statut dérivé** : 0 payé → `ISSUED`, payé partiel → `PARTIALLY_PAID`, payé = total →
+  `PAID`. Le `CHECK` PostgreSQL `invoices_paid_check` interdit toute incohérence
+  (payé > total, `PAID` sans solde, etc.), même en cas de bug applicatif.
+- **Jamais de suppression** : un paiement est **annulé** avec un motif obligatoire
+  (`voidedAt`, `voidedById`, `voidReason`) ; il reste visible, barré, dans la facture et dans
+  la liste, et le journal d'audit conserve qui a fait quoi. Le statut est recalculé.
+- Une facture ayant reçu un paiement non annulé ne peut pas être annulée ; si tous ses
+  paiements sont annulés, elle redevient annulable.
+- Les remboursements et avoirs ne sont pas gérés. Aucun frais, timbre ou retenue n'est
+  calculé : règles fiscales à valider avant tout ajout.
+
 ## Base de données
 
 - Schéma : `prisma/schema.prisma`. Client : `src/server/db/client.ts` (Prisma 7 +

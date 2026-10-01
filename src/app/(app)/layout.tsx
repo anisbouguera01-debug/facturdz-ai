@@ -13,6 +13,7 @@ import { requireTenantPage } from "@/server/tenant/context";
 const NAV_ITEMS: (NavItem & { permission?: Permission })[] = [
   { href: "/dashboard", label: "Tableau de bord" },
   { href: "/invoices", label: "Factures", permission: "invoices:read" },
+  { href: "/payments", label: "Paiements", permission: "payments:read" },
   { href: "/quotes", label: "Devis", permission: "quotes:read" },
   { href: "/customers", label: "Clients", permission: "customers:read" },
   { href: "/products", label: "Produits", permission: "products:read" },

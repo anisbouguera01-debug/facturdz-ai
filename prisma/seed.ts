@@ -23,6 +23,7 @@ import {
   createInvoiceFromQuote,
   issueInvoice,
 } from "../src/server/services/invoices";
+import { recordPayment } from "../src/server/services/payments";
 import { createQuote, respondToQuote, sendQuote } from "../src/server/services/quotes";
 import { Prisma, PrismaClient } from "../src/generated/prisma/client";
 import type { LimitKey } from "../src/generated/prisma/enums";
@@ -334,6 +335,46 @@ async function main() {
       if (plan.action === "CANCEL") await cancelInvoice(ctx, inv.id);
     }
 
+    // Paiements : une facture soldée, une payée en partie, une soldée en deux fois.
+    const issuedInvoices = await db.invoice.findMany({
+      where: { organizationId: org.id, status: "ISSUED" },
+      orderBy: { invoiceNumber: "asc" },
+      select: { id: true, total: true, issueDate: true },
+    });
+    const payDate = (i: { issueDate: Date }) => {
+      const d = addDays(i.issueDate.toISOString().slice(0, 10), 2);
+      return d > today ? today : d;
+    };
+    const [first, second, third] = issuedInvoices;
+    await recordPayment(ctx, {
+      invoiceId: first.id,
+      amount: first.total.toFixed(2),
+      paymentDate: payDate(first),
+      method: "BANK_TRANSFER",
+      reference: "VIR-2026-0001",
+    });
+    await recordPayment(ctx, {
+      invoiceId: second.id,
+      amount: second.total.mul("0.4").toDecimalPlaces(2).toFixed(2),
+      paymentDate: payDate(second),
+      method: "CHECK",
+      reference: "CHQ-445210",
+    });
+    const half = third.total.div(2).toDecimalPlaces(2);
+    await recordPayment(ctx, {
+      invoiceId: third.id,
+      amount: half.toFixed(2),
+      paymentDate: payDate(third),
+      method: "CASH",
+    });
+    await recordPayment(ctx, {
+      invoiceId: third.id,
+      amount: third.total.minus(half).toFixed(2),
+      paymentDate: today,
+      method: "BANK_TRANSFER",
+      reference: "VIR-2026-0002",
+    });
+
     const counts = {
       plans: await db.subscriptionPlan.count(),
       customers: await db.customer.count({ where: { organizationId: org.id } }),
@@ -341,6 +382,7 @@ async function main() {
       members: await db.organizationMember.count({ where: { organizationId: org.id } }),
       quotes: await db.quote.count({ where: { organizationId: org.id } }),
       invoices: await db.invoice.count({ where: { organizationId: org.id } }),
+      payments: await db.payment.count({ where: { organizationId: org.id } }),
     };
     console.log(
       `✔ Seed terminé — organisation « ${org.name} »\n` +
