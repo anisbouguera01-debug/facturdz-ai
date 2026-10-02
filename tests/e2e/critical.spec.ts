@@ -168,3 +168,26 @@ test("assistant IA : rien n'est enregistré avant confirmation, puis un simple b
   }
   await context.close();
 });
+
+test("page d'accueil publique : contenu, appels à l'action, sans violation CSP", async ({
+  page,
+}) => {
+  const violations = trackCspViolations(page);
+  const res = await page.goto("/");
+  expect(res?.status()).toBe(200);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Facturez plus simplement avec FacturDZ AI." }),
+  ).toBeVisible();
+  for (const id of ["fonctionnalites", "ia", "dashboard", "pdf", "securite", "tarifs", "faq"]) {
+    await expect(page.locator(`#${id}`)).toBeAttached();
+  }
+  await page.getByRole("link", { name: "Créer mon compte" }).first().click();
+  await expect(page).toHaveURL(/\/register/);
+  // Aucune fausse statistique ni preuve sociale (« +10 000 clients », « 99 % de satisfaction »…). Le « TVA 19 % » du talon de démonstration est un exemple de calcul, pas une statistique.
+  await page.goto("/");
+  const text = await page.locator("main").innerText();
+  expect(text).not.toMatch(
+    /\d+\s?%\s+(de |des |d')?(satisfaction|satisfaits|clients|entreprises|utilisateurs|gain|économie|plus rapide)|ils nous font confiance|témoignage|\+\s?\d{2,}\s+(clients|entreprises|utilisateurs)/i,
+  );
+  expect(violations).toEqual([]);
+});

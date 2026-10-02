@@ -309,3 +309,13 @@ charges et se modifient en base). Service : `src/server/services/limits.ts`.
 utilisateurs (suspension), plans et limites, tarifs IA. Limites MEMBERS et STORAGE_MB
 modifiables mais pas encore appliquées. Les entreprises sans abonnement (aucune limite) sont
 signalées sur la vue d'ensemble.
+
+## Page publique (Phase 20)
+
+`src/app/page.tsx` + `src/components/landing/sections.tsx`. Règle éditoriale : ne décrire que ce
+que l'application fait ; aucune statistique, témoignage, logo client ni promesse de conformité
+fiscale (un test e2e vérifie l'absence de pourcentages et de formules de preuve sociale). La grille
+tarifaire est lue en base (`src/server/plans-public.ts`) : mêmes plans et plafonds que ceux appliqués ;
+un plan payant à 0 DA affiche « Tarif communiqué prochainement ». Les captures
+(`src/assets/landing/`) viennent de la base de démo et sont légendées comme telles ; à régénérer si
+l'interface change nettement. Limites annoncées sur la page : pas de paiement en ligne, pas d'arabe.

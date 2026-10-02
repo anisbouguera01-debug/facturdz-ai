@@ -1,15 +1,44 @@
-// Page d'accueil provisoire (Phase 1). La vraie landing page arrive en Phase 20.
-export default function HomePage() {
+import type { Metadata } from "next";
+import {
+  AiSection,
+  DashboardSection,
+  Faq,
+  Features,
+  FinalCta,
+  Footer,
+  Header,
+  Hero,
+  PdfSection,
+  Pricing,
+  Security,
+} from "@/components/landing/sections";
+import { getCurrentSession } from "@/server/auth/session";
+import { listPublicPlans } from "@/server/plans-public";
+
+export const metadata: Metadata = {
+  title: { absolute: "FacturDZ AI — Facturation intelligente pour les entreprises algériennes" },
+  description:
+    "Facturation, devis, paiements et intelligence artificielle dans une seule plateforme. Numérotation continue, TVA calculée par le serveur, factures PDF.",
+};
+
+export default async function HomePage() {
+  const [session, plans] = await Promise.all([getCurrentSession(), listPublicPlans()]);
+  const signedIn = Boolean(session);
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-4 py-16">
-      <p className="text-sm font-medium tracking-wide text-primary uppercase">FacturDZ AI</p>
-      <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
-        Facturez plus simplement avec FacturDZ AI.
-      </h1>
-      <p className="max-w-xl text-lg text-muted-foreground">
-        Facturation, devis, paiements et intelligence artificielle dans une seule plateforme.
-      </p>
-      <p className="text-sm text-muted-foreground">Application en cours de construction.</p>
-    </main>
+    <>
+      <Header signedIn={signedIn} />
+      <main>
+        <Hero signedIn={signedIn} />
+        <Features />
+        <AiSection />
+        <DashboardSection />
+        <PdfSection />
+        <Security />
+        <Pricing plans={plans} />
+        <Faq />
+        <FinalCta signedIn={signedIn} />
+      </main>
+      <Footer />
+    </>
   );
 }
