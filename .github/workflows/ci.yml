@@ -124,3 +124,14 @@ jobs:
             test-results
             next.log
           if-no-files-found: ignore
+
+  docker:
+    name: Image Docker (build uniquement)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construire l'image applicative
+        run: docker build --build-arg NEXT_PUBLIC_APP_URL=https://app.facturdz.example -t facturdz .
+      - name: Construire l'image de migration
+        run: docker build --target migrate -t facturdz-migrate .

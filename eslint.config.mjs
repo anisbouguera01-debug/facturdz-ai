@@ -47,7 +47,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["src/server/env.ts", "src/server/logger.ts", "src/proxy.ts"],
+    files: ["src/server/env.ts", "src/server/logger.ts", "src/proxy.ts", "src/instrumentation.ts"],
     rules: { "no-restricted-syntax": "off" },
   },
   {

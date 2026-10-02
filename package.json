@@ -28,7 +28,8 @@
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
     "check:bundle": "tsx scripts/check-client-bundle.ts",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "env:check": "tsx --conditions=react-server scripts/check-env.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

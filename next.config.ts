@@ -18,6 +18,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Image Docker autonome (Dockerfile) : `NEXT_OUTPUT=standalone`. Sans effet sur Vercel.
+  ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" as const } : {}),
   poweredByHeader: false,
   // pino (workers Node) et pdfkit (fichiers de données) restent hors du bundle serveur.
   serverExternalPackages: ["pino", "pino-pretty", "pdfkit"],

@@ -1,6 +1,11 @@
 import "server-only";
 import { z } from "zod";
 
+// Staging et production : configuration stricte (échec au démarrage plutôt qu'au premier incident).
+const PLACEHOLDER_SECRET =
+  /change|example|exemple|placeholder|ci-only|not-used|secret-secret|(.)\1{9,}/i;
+const hosted = (e: { APP_ENV: string }) => e.APP_ENV === "staging" || e.APP_ENV === "production";
+
 /**
  * Variables d'environnement serveur, validées par Zod.
  *
@@ -36,6 +41,27 @@ export const serverEnvSchema = z
   .refine((e) => !(e.AI_PROVIDER === "mock" && e.APP_ENV === "production"), {
     path: ["AI_PROVIDER"],
     message: "« mock » est interdit en production (APP_ENV=production)",
+  })
+  .superRefine((e, ctx) => {
+    if (!hosted(e)) return;
+    const issue = (path: string, message: string) =>
+      ctx.addIssue({ code: "custom", path: [path], message });
+    if (new URL(e.NEXT_PUBLIC_APP_URL).protocol !== "https:")
+      issue("NEXT_PUBLIC_APP_URL", "doit être en https en staging et en production");
+    if (PLACEHOLDER_SECRET.test(e.AUTH_SECRET))
+      issue(
+        "AUTH_SECRET",
+        "ressemble à une valeur d'exemple : générez-en une (openssl rand -base64 32)",
+      );
+    if (e.AI_PROVIDER !== "mock") {
+      if (!e.AI_MODEL) issue("AI_MODEL", "obligatoire (aucun modèle par défaut)");
+      if (e.AI_PROVIDER === "openai" && !e.OPENAI_API_KEY)
+        issue("OPENAI_API_KEY", "obligatoire avec AI_PROVIDER=openai");
+      if (e.AI_PROVIDER === "gemini" && !e.GEMINI_API_KEY)
+        issue("GEMINI_API_KEY", "obligatoire avec AI_PROVIDER=gemini");
+    }
+    if (e.DATABASE_URL.includes("localhost") || e.DATABASE_URL.includes("127.0.0.1"))
+      issue("DATABASE_URL", "pointe vers localhost : base managée attendue");
   });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

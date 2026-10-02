@@ -126,23 +126,28 @@ Documentation complémentaire : [`docs/ai.md`](docs/ai.md), [`docs/security.md`]
 
 ## Feuille de route
 
-| Phase | Contenu                                                | État    |
-| ----- | ------------------------------------------------------ | ------- |
-| 1     | Architecture + initialisation                          | ✅      |
-| 2     | PostgreSQL + Prisma                                    | ✅      |
-| 3     | Authentification                                       | ✅      |
-| 4     | Multi-tenancy                                          | ✅      |
-| 5     | Clients                                                | ✅      |
-| 6     | Produits                                               | ✅      |
-| 7     | Devis                                                  | ✅      |
-| 8     | Factures (émission numérotée, annulation, conversion)  | ✅      |
-| 9–11  | Paiements, PDF, dashboard                              | ✅      |
-| 12    | FacturDZ AI (brouillons validés, assistant, simulé)    | ✅      |
-| 13    | Fournisseur OpenAI (testé sur faux serveur)            | ✅      |
-| 14    | Fournisseur Gemini (testé sur faux serveur)            | ✅      |
-| 15    | Usage et coûts IA (tarifs saisis, jamais inventés)     | ✅      |
-| 16    | Plans et limites (factures, devis, IA, abonnement)     | ✅      |
-| 17    | Panneau d'administration de la plateforme              | ✅      |
-| 18    | Sécurité (CSP nonce, débit, garde-fous, audit deps)    | ✅      |
-| 19    | Tests (e2e navigateur, bundle sans secret, couverture) | ✅      |
-| 20–21 | Landing, production                                    | à faire |
+| Phase | Contenu                                                | État                                         |
+| ----- | ------------------------------------------------------ | -------------------------------------------- |
+| 1     | Architecture + initialisation                          | ✅                                           |
+| 2     | PostgreSQL + Prisma                                    | ✅                                           |
+| 3     | Authentification                                       | ✅                                           |
+| 4     | Multi-tenancy                                          | ✅                                           |
+| 5     | Clients                                                | ✅                                           |
+| 6     | Produits                                               | ✅                                           |
+| 7     | Devis                                                  | ✅                                           |
+| 8     | Factures (émission numérotée, annulation, conversion)  | ✅                                           |
+| 9–11  | Paiements, PDF, dashboard                              | ✅                                           |
+| 12    | FacturDZ AI (brouillons validés, assistant, simulé)    | ✅                                           |
+| 13    | Fournisseur OpenAI (testé sur faux serveur)            | ✅                                           |
+| 14    | Fournisseur Gemini (testé sur faux serveur)            | ✅                                           |
+| 15    | Usage et coûts IA (tarifs saisis, jamais inventés)     | ✅                                           |
+| 16    | Plans et limites (factures, devis, IA, abonnement)     | ✅                                           |
+| 17    | Panneau d'administration de la plateforme              | ✅                                           |
+| 18    | Sécurité (CSP nonce, débit, garde-fous, audit deps)    | ✅                                           |
+| 19    | Tests (e2e navigateur, bundle sans secret, couverture) | ✅                                           |
+| 20    | Landing page publique (sans fausses stats)             | ✅                                           |
+| 21    | Production (env strict, sondes, Docker, runbook)       | ✅ code, lancement : voir docs/deployment.md |
+
+## Déploiement
+
+Voir [docs/deployment.md](docs/deployment.md) : environnements, variables, Vercel/Docker, sondes `/api/health` et `/api/ready`, procédure de mise en production, sauvegardes et checklist de lancement.

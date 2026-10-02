@@ -55,13 +55,28 @@ describe("server actions", () => {
   });
 });
 
+/** Routes publiques par conception : sans donnée, sans session (sondes de l'hébergeur). */
+const PUBLIC_ROUTES = ["/api/health/", "/api/ready/"];
+
 describe("routes", () => {
-  it.each(files.filter((f) => /\/route\.ts$/.test(f) && !f.includes("/api/auth/")))(
-    "%s : contrôle d'accès",
-    (file) => {
-      expect(GUARDS.test(readFileSync(file, "utf8")), file).toBe(true);
-    },
-  );
+  it("les routes publiques ne lisent aucune donnée métier", () => {
+    for (const r of PUBLIC_ROUTES) {
+      const file = files.find((f) => f.includes(r))!;
+      const src = readFileSync(file, "utf8");
+      expect(src, file).not.toMatch(/organization|invoice|customer|session|user\./i);
+    }
+  });
+
+  it.each(
+    files.filter(
+      (f) =>
+        /\/route\.ts$/.test(f) &&
+        !f.includes("/api/auth/") &&
+        !PUBLIC_ROUTES.some((r) => f.includes(r)),
+    ),
+  )("%s : contrôle d'accès", (file) => {
+    expect(GUARDS.test(readFileSync(file, "utf8")), file).toBe(true);
+  });
 });
 
 describe("CSP", () => {
