@@ -172,3 +172,89 @@ describe("résumé de consommation", () => {
     expect(s.byFeature.some((f) => f.feature === "ANALYTICS")).toBe(true);
   });
 });
+
+describe("AIUsage : jetons, total, coût et latence", () => {
+  const priced = async () => {
+    await db.modelPricing.deleteMany({});
+    await db.modelPricing.create({
+      data: {
+        provider: "MOCK",
+        model: "mock-demo",
+        inputCostPerMillionTokens: "2",
+        outputCostPerMillionTokens: "8",
+        cachedInputCostPerMillionTokens: "0.5",
+        effectiveFrom: new Date("2020-01-01"),
+      },
+    });
+  };
+  const result = (usage: {
+    inputTokens: number;
+    cachedInputTokens: number;
+    outputTokens: number;
+  }) =>
+    ({
+      data: "ok",
+      provider: "MOCK",
+      model: "mock-demo",
+      providerRequestId: "req_x",
+      usage,
+    }) as const;
+
+  it("succès : entrée, sortie, total, coût (jetons en cache au tarif cache) et latence mesurée", async () => {
+    await priced();
+    await runAI(
+      A.ctx,
+      "GENERAL_ASSISTANT",
+      async () => {
+        await new Promise((r) => setTimeout(r, 40));
+        return result({
+          inputTokens: 1_000_000,
+          cachedInputTokens: 400_000,
+          outputTokens: 250_000,
+        });
+      },
+      (d) => d,
+    );
+    const row = await A.ctx.db.aIUsage.findFirstOrThrow({ orderBy: { createdAt: "desc" } });
+    expect(row.status).toBe("SUCCESS");
+    expect(row.inputTokens).toBe(1_000_000);
+    expect(row.cachedInputTokens).toBe(400_000);
+    expect(row.outputTokens).toBe(250_000);
+    expect(row.totalTokens).toBe(1_250_000);
+    // 600 000 × 2 + 400 000 × 0,5 + 250 000 × 8 (par million) = 1,2 + 0,2 + 2 = 3,4
+    expect(row.estimatedCost?.toFixed(6)).toBe("3.400000");
+    expect(row.latencyMs).toBeGreaterThanOrEqual(35);
+    expect(row.latencyMs).toBeLessThan(5_000);
+    expect(row.providerRequestId).toBe("req_x");
+  });
+
+  it("erreur fournisseur (dont délai dépassé) : ligne ERROR, 0 jeton, coût null, latence mesurée, code conservé", async () => {
+    await priced();
+    const { AppError } = await import("@/server/errors");
+    await expect(
+      runAI(
+        A.ctx,
+        "GENERAL_ASSISTANT",
+        async () => {
+          await new Promise((r) => setTimeout(r, 25));
+          throw new AppError("AI_UNAVAILABLE", "Délai dépassé.");
+        },
+        (d) => d,
+      ),
+    ).rejects.toThrow();
+    const row = await A.ctx.db.aIUsage.findFirstOrThrow({ orderBy: { createdAt: "desc" } });
+    expect(row.status).toBe("ERROR");
+    expect(row.errorCode).toBe("AI_UNAVAILABLE");
+    expect(row.totalTokens).toBe(0);
+    expect(row.estimatedCost).toBeNull();
+    expect(row.latencyMs).toBeGreaterThanOrEqual(20);
+  });
+
+  it("ni prompt ni réponse ni clé ne sont stockés dans AIUsage", async () => {
+    const cols = Object.keys(await A.ctx.db.aIUsage.findFirstOrThrow())
+      .join(",")
+      .toLowerCase();
+    for (const forbidden of ["prompt", "response", "content", "apikey", "secret"])
+      expect(cols).not.toContain(forbidden);
+  });
+});

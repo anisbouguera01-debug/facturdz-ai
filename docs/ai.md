@@ -144,3 +144,31 @@ aucun outil d'écriture ou de suppression, aucun secret dans le contexte, donné
 `runAI` applique `AI_REQUESTS_PER_MONTH`, `AI_TOKENS_PER_MONTH` et `AI_BUDGET_USD_PER_MONTH` du plan avant
 l'appel au fournisseur (voir `docs/architecture.md`, « Plans et limites »). Le budget n'inclut que les appels
 dont le coût est estimable : sans tarif enregistré, il ne peut pas être appliqué.
+
+## Essai réel avec de vraies clés (Bloc 4)
+
+**État honnête : OpenAI et Gemini n'ont JAMAIS été appelés pour de vrai** (aucune clé dans l'environnement de
+développement, réseau sortant limité). Ce qui est vérifié : les deux fournisseurs contre un faux serveur,
+`runAI`/`AIUsage`/coût contre PostgreSQL, l'absence de clé dans le bundle navigateur (`pnpm check:bundle`).
+
+À faire UNE FOIS par fournisseur, depuis une machine de confiance, avant d'ouvrir l'IA aux clients :
+
+```bash
+OPENAI_API_KEY=… pnpm ai:live --provider openai --model <nom exact> --input <$/M entrée> --output <$/M sortie>
+GEMINI_API_KEY=… pnpm ai:live --provider gemini --model <nom exact> --input <$/M entrée> --output <$/M sortie>
+```
+
+Le script (`scripts/ai-live-test.ts`) contrôle : texte, sortie structurée Zod, boucle d'outils réelle, jetons
+d'entrée/sortie non nuls, coût estimé (prix saisis par vous, aucun prix codé), clé invalide sans fuite de la clé,
+délai dépassé. Son code a été auto-testé contre un faux serveur ; sans clé il affiche « NON EXÉCUTÉ » (code 0 ;
+`--require` → code 2 pour une CI). Aucune donnée réelle n'est envoyée.
+
+Ensuite : (1) `AI_MODEL` doit être **exactement** le nom enregistré dans `model_pricing` (`pnpm ai:pricing
+--provider … --model <même nom> --input … --output …`), sinon le coût reste « non estimé » ; (2) lancer une vraie
+demande depuis l'application et comparer `/ai/usage` à la console du fournisseur ; (3) fixer des plafonds
+(`AI_REQUESTS_PER_MONTH`, `AI_TOKENS_PER_MONTH`, `AI_BUDGET_USD_PER_MONTH`) dans `/admin/plans` ; (4) poser un
+plafond de dépense côté fournisseur.
+
+Erreurs et limites déjà couvertes par les tests : 401/4xx, 429 et 5xx (une relance puis erreur générique), réseau,
+délai de 30 s, JSON invalide (une correction puis refus), outil inconnu, boucle bornée, limite de débit 20/min,
+quotas du plan — chacun enregistré dans `AIUsage` (statut, code, latence).

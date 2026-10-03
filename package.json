@@ -23,6 +23,7 @@
     "db:reset:local": "tsx scripts/db/migrate.ts --reset && pnpm db:seed",
     "db:verify": "tsx scripts/db/verify-schema.ts",
     "admin:grant": "tsx scripts/db/grant-admin.ts",
+    "ai:live": "tsx --conditions=react-server scripts/ai-live-test.ts",
     "ai:pricing": "tsx --conditions=react-server scripts/db/set-pricing.ts",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
