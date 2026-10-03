@@ -40,6 +40,8 @@ export interface PdfModel {
     discountRate: string;
     vatRate: string;
     subtotal: string;
+    /** TVA de la ligne, déjà arrondie et stockée. */
+    taxAmount: string;
   }[];
   totals: { subtotal: string; discountTotal: string; taxTotal: string; total: string };
   payment: { paid: string; remaining: string } | null;

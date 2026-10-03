@@ -40,6 +40,23 @@ const COL = {
   amount: { x: M + 445, w: W - 445 },
 };
 
+/**
+ * Ventilation de la TVA par taux : simple addition des montants de ligne DÉJÀ stockés
+ * (base = HT net, TVA = TVA arrondie par ligne). Aucun nouveau calcul ni arrondi : la somme
+ * des TVA de la ventilation égale donc toujours « Total TVA ».
+ */
+export function vatBreakdown(items: PdfModel["items"]) {
+  const byRate = new Map<string, { base: Money; tax: Money }>();
+  for (const it of items) {
+    const key = new Money(it.vatRate).toFixed(2);
+    const cur = byRate.get(key) ?? { base: new Money(0), tax: new Money(0) };
+    byRate.set(key, { base: cur.base.plus(it.subtotal), tax: cur.tax.plus(it.taxAmount) });
+  }
+  return [...byRate.entries()]
+    .map(([rate, v]) => ({ rate, base: v.base.toFixed(2), tax: v.tax.toFixed(2) }))
+    .sort((a, b) => new Money(b.rate).comparedTo(a.rate));
+}
+
 const qty = (q: string) => new Money(q).toDecimalPlaces(3).toString().replace(".", ",");
 
 function partyLines(p: PdfParty): string[] {
@@ -204,7 +221,8 @@ export function renderPdf(model: PdfModel): Promise<Buffer> {
     rows.push(["Déjà payé", formatMoney(model.payment.paid, model.currency)]);
     rows.push(["Reste à payer", formatMoney(model.payment.remaining, model.currency), true]);
   }
-  const boxH = rows.length * 17 + 14;
+  const breakdown = vatBreakdown(model.items);
+  const boxH = Math.max(rows.length * 17, (breakdown.length + 2) * 14) + 14;
   if (y + boxH > bottom()) {
     doc.addPage();
     y = M;
@@ -226,6 +244,27 @@ export function renderPdf(model: PdfModel): Promise<Buffer> {
     });
     text(value, bx + 110, y + 1, { w: 130, align: "right", bold: strong, size: strong ? 10.5 : 9 });
     y += 17;
+  }
+
+  // ── Ventilation de la TVA par taux (à gauche des totaux) ──
+  {
+    let by = y - rows.length * 17 + 1;
+    text("VENTILATION DE LA TVA", M, by, { size: 7.5, bold: true, color: MUTED });
+    by += 13;
+    const cols = [
+      { x: M, w: 50, a: "left" as const, h: "Taux" },
+      { x: M + 55, w: 85, a: "right" as const, h: "Base HT" },
+      { x: M + 145, w: 75, a: "right" as const, h: "TVA" },
+    ];
+    for (const c of cols) text(c.h, c.x, by, { w: c.w, align: c.a, size: 8, color: MUTED });
+    by += 12;
+    for (const r of breakdown) {
+      text(formatRate(r.rate), cols[0].x, by, { w: cols[0].w, size: 8.5 });
+      text(formatAmount(r.base), cols[1].x, by, { w: cols[1].w, align: "right", size: 8.5 });
+      text(formatAmount(r.tax), cols[2].x, by, { w: cols[2].w, align: "right", size: 8.5 });
+      by += 12;
+    }
+    y = Math.max(y, by);
   }
 
   // ── Notes et conditions ──
