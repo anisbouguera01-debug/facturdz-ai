@@ -10,11 +10,13 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { CheckMailNotice } from "@/components/forms/check-mail-notice";
 import { PASSWORD_MIN, registerSchema, type RegisterInput } from "@/lib/validation/auth";
 
 export function RegisterForm() {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -24,7 +26,8 @@ export function RegisterForm() {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     const v = registerSchema.parse(values);
-    const { error } = await authClient.signUp.email({
+    const { data, error } = await authClient.signUp.email({
+      callbackURL: "/verify-email",
       email: v.email,
       password: v.password,
       name: `${v.firstName} ${v.lastName}`,
@@ -35,9 +38,16 @@ export function RegisterForm() {
       setFormError(authErrorMessage(error, "register"));
       return;
     }
+    // Sans session (adresse à confirmer) : on invite à ouvrir le lien reçu par e-mail.
+    if (!data?.token) {
+      setSentTo(v.email);
+      return;
+    }
     router.replace("/onboarding");
     router.refresh();
   });
+
+  if (sentTo) return <CheckMailNotice email={sentTo} />;
 
   const pwHint = `${PASSWORD_MIN} caractères minimum. Une phrase de quelques mots est plus sûre et plus facile à retenir.`;
 

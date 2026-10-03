@@ -191,3 +191,23 @@ test("page d'accueil publique : contenu, appels à l'action, sans violation CSP"
   );
   expect(violations).toEqual([]);
 });
+
+test("mot de passe oublié : même message pour une adresse connue et inconnue", async ({ page }) => {
+  const messages: string[] = [];
+  for (const email of ["owner@demo.facturdz.test", `inconnu-${Date.now()}@e2e.facturdz.test`]) {
+    await page.goto("/forgot-password");
+    await page.getByLabel("Adresse e-mail").fill(email);
+    await page.getByRole("button", { name: "Envoyer le lien" }).click();
+    const notice = page.getByRole("status").filter({ hasText: "Si un compte existe" });
+    await expect(notice).toBeVisible();
+    messages.push(await notice.innerText());
+  }
+  expect(messages[0]).toBe(messages[1]);
+  await page.goto("/reset-password");
+  await expect(page.getByText("invalide ou a expiré")).toBeVisible();
+  await page.goto("/reset-password?token=forge");
+  await page.getByLabel("Nouveau mot de passe").fill("Un-nouveau-mot-de-passe-1");
+  await page.getByLabel("Confirmer le mot de passe").fill("Un-nouveau-mot-de-passe-1");
+  await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
+  await expect(page.getByText(/invalide ou a expiré|n'a pas pu être modifié/)).toBeVisible();
+});

@@ -34,6 +34,12 @@ export const serverEnvSchema = z
     OPENAI_API_KEY: z.string().min(1).optional(),
     GEMINI_API_KEY: z.string().min(1).optional(),
 
+    // E-mails transactionnels : « resend » en production ; « log » (écrit dans les journaux)
+    // uniquement en développement.
+    EMAIL_PROVIDER: z.enum(["resend", "log"]).default("log"),
+    EMAIL_FROM: z.string().min(3).optional(), // ex. « FacturDZ AI <no-reply@votre-domaine> »
+    RESEND_API_KEY: z.string().min(1).optional(),
+
     NEXT_PUBLIC_APP_URL: z.url(),
   })
   // `next start` impose NODE_ENV=production même en local : le garde-fou porte donc sur APP_ENV,
@@ -59,6 +65,15 @@ export const serverEnvSchema = z
         issue("OPENAI_API_KEY", "obligatoire avec AI_PROVIDER=openai");
       if (e.AI_PROVIDER === "gemini" && !e.GEMINI_API_KEY)
         issue("GEMINI_API_KEY", "obligatoire avec AI_PROVIDER=gemini");
+    }
+    if (e.EMAIL_PROVIDER !== "resend")
+      issue(
+        "EMAIL_PROVIDER",
+        "« resend » obligatoire en staging et en production (« log » est réservé au développement)",
+      );
+    else {
+      if (!e.RESEND_API_KEY) issue("RESEND_API_KEY", "obligatoire avec EMAIL_PROVIDER=resend");
+      if (!e.EMAIL_FROM) issue("EMAIL_FROM", "obligatoire avec EMAIL_PROVIDER=resend");
     }
     if (e.DATABASE_URL.includes("localhost") || e.DATABASE_URL.includes("127.0.0.1"))
       issue("DATABASE_URL", "pointe vers localhost : base managée attendue");

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,7 +26,12 @@ export function LoginForm({ next }: { next?: string }) {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     const { email, password } = loginSchema.parse(values);
-    const { error } = await authClient.signIn.email({ email, password });
+    // callbackURL : où mène le lien de confirmation renvoyé si l'adresse n'est pas vérifiée.
+    const { error } = await authClient.signIn.email({
+      email,
+      password,
+      callbackURL: "/verify-email",
+    });
     if (error) {
       setFormError(authErrorMessage(error, "login"));
       return;
@@ -57,6 +63,15 @@ export function LoginForm({ next }: { next?: string }) {
           {...register("password")}
         />
       </Field>
+
+      <p className="-mt-2 text-sm">
+        <Link
+          href="/forgot-password"
+          className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Mot de passe oublié ?
+        </Link>
+      </p>
 
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? "Connexion…" : "Se connecter"}

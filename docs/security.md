@@ -173,3 +173,20 @@ choisi. Les tests d'isolation existants serviraient alors de filet de non-régre
   derrière le CDN/WAF de production).
 - Pas de 2FA ni de politique de mot de passe au-delà de la validation actuelle.
 - Les en-têtes `x-forwarded-for` ne sont fiables que derrière un proxy de confiance (production).
+
+## E-mails et comptes (Bloc 1 pré-lancement)
+
+- Fournisseur : **Resend** (REST via `fetch`, sans dépendance ; interface `EmailProvider` remplaçable).
+  Clé et expéditeur uniquement côté serveur (`RESEND_API_KEY`, `EMAIL_FROM`) ; ni clé ni corps
+  d'e-mail (jetons à usage unique) ne sont journalisés. `EMAIL_PROVIDER=log` (développement) est
+  refusé en staging/production.
+- **Vérification d'adresse obligatoire** en staging/production (`requireEmailVerification`) :
+  l'inscription n'ouvre pas de session ; lien valable 24 h ; une tentative de connexion d'un compte
+  non vérifié (mot de passe correct) renvoie un lien. En développement local, non exigée.
+- **Mot de passe oublié** : lien à usage unique valable 1 h ; réponse identique que l'adresse
+  existe ou non ; envoi en arrière-plan (`after`) pour ne pas révéler l'existence du compte par le
+  temps de réponse ; après changement : toutes les sessions sont fermées et un e-mail d'alerte est envoyé.
+- Limites de débit : demande de réinitialisation 3/10 min, renvoi de vérification 3/10 min,
+  réinitialisation 5/10 min (en plus des limites de connexion/inscription).
+- À configurer chez le fournisseur avant le lancement : domaine d'envoi vérifié (SPF, DKIM, idéalement
+  DMARC) ; sans cela les e-mails finissent en indésirables.

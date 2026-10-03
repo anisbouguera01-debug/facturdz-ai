@@ -57,7 +57,8 @@ describe("inscription", () => {
     const user = await db.user.findUnique({ where: { email: e } });
     // Soit l'inscription est refusée, soit les champs protégés sont ignorés.
     if (user) expect(user.platformRole).toBe("USER");
-    expect(await db.user.count({ where: { platformRole: "SUPER_ADMIN" } })).toBe(0);
+    // Périmètre : CE compte (la base de test est partagée avec d'autres fichiers qui créent des admins).
+    expect(await db.user.count({ where: { email: e, platformRole: "SUPER_ADMIN" } })).toBe(0);
   });
 
   it("refuse un mot de passe trop court", async () => {

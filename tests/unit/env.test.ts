@@ -63,6 +63,9 @@ describe("staging et production (configuration stricte)", () => {
     AI_PROVIDER: "openai",
     AI_MODEL: "un-modele",
     OPENAI_API_KEY: "cle-reelle",
+    EMAIL_PROVIDER: "resend",
+    RESEND_API_KEY: "re_cle",
+    EMAIL_FROM: "FacturDZ AI <no-reply@facturdz.example>",
   };
 
   it("accepte une configuration complète", () => {
@@ -77,6 +80,9 @@ describe("staging et production (configuration stricte)", () => {
     ["clé OpenAI absente", { OPENAI_API_KEY: "" }, /OPENAI_API_KEY/],
     ["base locale", { DATABASE_URL: "postgresql://u:p@localhost:5432/x" }, /DATABASE_URL/],
     ["mock", { AI_PROVIDER: "mock" }, /AI_PROVIDER/],
+    ["e-mail en mode log", { EMAIL_PROVIDER: "log" }, /EMAIL_PROVIDER/],
+    ["clé Resend absente", { RESEND_API_KEY: "" }, /RESEND_API_KEY/],
+    ["expéditeur absent", { EMAIL_FROM: "" }, /EMAIL_FROM/],
   ])("refuse : %s", (_name, override, pattern) => {
     expect(() => parseServerEnv({ ...prod, ...override })).toThrow(pattern);
   });
