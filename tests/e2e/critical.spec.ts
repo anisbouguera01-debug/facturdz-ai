@@ -211,3 +211,25 @@ test("mot de passe oublié : même message pour une adresse connue et inconnue",
   await page.getByRole("button", { name: "Enregistrer le mot de passe" }).click();
   await expect(page.getByText(/invalide ou a expiré|n'a pas pu être modifié/)).toBeVisible();
 });
+
+test("pages légales : accessibles sans session, avertissement visible, liées depuis l'accueil", async ({
+  page,
+}) => {
+  const bad: string[] = [];
+  page.on("console", (m) => {
+    if (/Content Security Policy/i.test(m.text())) bad.push(m.text().slice(0, 200));
+  });
+  for (const [href, title] of [
+    ["/mentions-legales", /mentions légales/i],
+    ["/cgu", /conditions/i],
+    ["/confidentialite", /confidentialité/i],
+  ] as const) {
+    await page.goto("/");
+    await expect(page.locator(`footer a[href="${href}"]`).first()).toBeVisible();
+    const res = await page.goto(href);
+    expect(res?.status()).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(title);
+    await expect(page.getByText(/validé|validation juridique/i).first()).toBeVisible();
+  }
+  expect(bad).toEqual([]);
+});

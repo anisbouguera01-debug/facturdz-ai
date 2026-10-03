@@ -66,7 +66,9 @@ Derrière un reverse proxy, il doit transmettre `X-Forwarded-For` (IP dans le jo
 ## Procédure de mise en production
 
 1. CI verte (typecheck, lint, tests, couverture, bundle sans secret, e2e).
-2. `pnpm env:check` avec les variables de l'environnement cible.
+2. `pnpm env:check` avec les variables de l'environnement cible, puis `pnpm legal:check`
+   (renseigner `src/lib/legal-config.ts` ; les pages légales sont un **gabarit à faire valider par un
+   juriste** avant toute commercialisation).
 3. Sauvegarde/point de restauration de la base (automatique chez un hébergeur sérieux ; le vérifier).
 4. `pnpm db:deploy` (migrations). Elles sont **« en avant seulement »**.
 5. Déploiement de la nouvelle version, puis `/api/ready`, puis parcours de fumée à la main :

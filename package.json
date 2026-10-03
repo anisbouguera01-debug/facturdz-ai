@@ -29,7 +29,8 @@
     "test:e2e": "playwright test",
     "check:bundle": "tsx scripts/check-client-bundle.ts",
     "test:coverage": "vitest run --coverage",
-    "env:check": "tsx --conditions=react-server scripts/check-env.ts"
+    "env:check": "tsx --conditions=react-server scripts/check-env.ts",
+    "legal:check": "tsx scripts/check-legal.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

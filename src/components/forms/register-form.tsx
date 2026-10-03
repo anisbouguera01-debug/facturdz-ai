@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -91,6 +92,18 @@ export function RegisterForm() {
           {...register("password")}
         />
       </Field>
+
+      <p className="text-sm text-muted-foreground">
+        En créant un compte, vous acceptez les{" "}
+        <Link href="/cgu" className="underline underline-offset-4">
+          conditions générales d&apos;utilisation
+        </Link>{" "}
+        et reconnaissez avoir pris connaissance de la{" "}
+        <Link href="/confidentialite" className="underline underline-offset-4">
+          politique de confidentialité
+        </Link>
+        .
+      </p>
 
       <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1 w-full">
         {isSubmitting ? "Création du compte…" : "Créer mon compte"}

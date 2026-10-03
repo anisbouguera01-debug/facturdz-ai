@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LEGAL_LINKS } from "@/components/legal/legal-ui";
 import { InvoiceStub } from "@/components/layout/invoice-stub";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -487,15 +488,20 @@ export function FinalCta({ signedIn }: { signedIn: boolean }) {
 export function Footer() {
   return (
     <footer className="border-t py-8 text-sm text-muted-foreground">
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 sm:px-8">
         <p>© {new Date().getFullYear()} FacturDZ AI</p>
-        <nav aria-label="Pied de page" className="flex gap-4">
+        <nav aria-label="Pied de page" className="flex flex-wrap gap-x-5 gap-y-2">
           <Link href="/login" className="underline-offset-4 hover:underline">
             Connexion
           </Link>
           <Link href="/register" className="underline-offset-4 hover:underline">
             Inscription
           </Link>
+          {LEGAL_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="underline-offset-4 hover:underline">
+              {l.label}
+            </Link>
+          ))}
         </nav>
       </div>
     </footer>
