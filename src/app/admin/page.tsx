@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { AdminTable } from "@/components/admin/admin-ui";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { getPlatformOverview } from "@/server/admin/overview";
 import { requireSuperAdminPage } from "@/server/admin/context";
 
@@ -13,13 +16,7 @@ const df = new Intl.DateTimeFormat("fr-DZ", {
 });
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <div className="rounded-xl border bg-card p-4 shadow-card">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
-    </div>
-  );
+  return <StatCard label={label} value={String(value)} note={hint} />;
 }
 
 export default async function AdminHome() {
@@ -33,16 +30,12 @@ export default async function AdminHome() {
 
   return (
     <main className="grid gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Vue d&apos;ensemble</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Compteurs d&apos;exploitation uniquement : aucun contenu métier des entreprises (clients,
-          montants, prompts) n&apos;est accessible ici. Mois en cours depuis le{" "}
-          {df.format(o.monthStart)}.
-        </p>
-      </div>
+      <PageHeader
+        title="Vue d'ensemble"
+        description={`Compteurs d'exploitation uniquement : aucun contenu métier des entreprises (clients, montants, prompts) n'est accessible ici. Mois en cours depuis le ${df.format(o.monthStart)}.`}
+      />
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Entreprises" value={nf.format(o.organizations)} />
         <Stat
           label="Utilisateurs actifs"
@@ -55,30 +48,46 @@ export default async function AdminHome() {
           hint={`${nf.format(o.invoicesIssuedMonth)} ce mois`}
         />
         <Stat label="Devis" value={nf.format(o.quotes)} />
-      </section>
+      </dl>
 
       {o.withoutSubscription > 0 ? (
-        <p role="alert" className="rounded-md border border-warning/40 px-3 py-2 text-sm">
+        <p
+          role="alert"
+          className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm"
+        >
           {o.withoutSubscription} entreprise(s) sans abonnement : aucune limite ne s&apos;applique.
           Rattachez-les à un plan depuis « Entreprises ».
         </p>
       ) : null}
 
       <section>
-        <h2 className="font-semibold">Abonnements</h2>
-        <ul className="mt-2 grid gap-1 text-sm">
-          {o.subscriptions.length === 0 ? <li className="text-muted-foreground">Aucun.</li> : null}
-          {o.subscriptions.map((s) => (
-            <li key={`${s.plan}-${s.status}`}>
-              {s.plan} · {s.status} : <strong>{s.count}</strong>
-            </li>
-          ))}
-        </ul>
+        <h2 className="text-base font-semibold tracking-tight">Abonnements</h2>
+        <div className="mt-2">
+          <AdminTable
+            caption="Abonnements par plan et statut"
+            head={[
+              { label: "Plan" },
+              { label: "Statut" },
+              { label: "Entreprises", align: "right" },
+            ]}
+            empty="Aucun abonnement."
+          >
+            {o.subscriptions.length === 0
+              ? undefined
+              : o.subscriptions.map((s) => (
+                  <tr key={`${s.plan}-${s.status}`} className="border-t">
+                    <td className="px-4 py-3">{s.plan}</td>
+                    <td className="px-4 py-3">{s.status}</td>
+                    <td className="tabular px-4 py-3 text-right font-medium">{s.count}</td>
+                  </tr>
+                ))}
+          </AdminTable>
+        </div>
       </section>
 
       <section className="grid gap-3">
-        <h2 className="font-semibold">Consommation IA ce mois</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="text-base font-semibold tracking-tight">Consommation IA ce mois</h2>
+        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat label="Appels" value={nf.format(aiCalls)} />
           <Stat label="Erreurs / refus" value={nf.format(aiErrors)} />
           <Stat label="Jetons" value={nf.format(aiTokens)} />
@@ -95,7 +104,7 @@ export default async function AdminHome() {
                 : "Estimation indicative"
             }
           />
-        </div>
+        </dl>
         <div className="grid gap-6 lg:grid-cols-3">
           <SimpleTable
             title="Par modèle"
@@ -139,39 +148,21 @@ export default async function AdminHome() {
 
 function SimpleTable({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {
   return (
-    <section>
-      <h3 className="font-semibold">{title}</h3>
-      <div className="mt-2 overflow-x-auto rounded-xl border bg-card shadow-card">
-        <table className="w-full text-sm">
-          <thead className="text-left text-muted-foreground">
-            <tr>
-              {head.map((h) => (
-                <th key={h} className="px-3 py-2 font-medium">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={head.length} className="px-3 py-3 text-muted-foreground">
-                  Aucune donnée.
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((r, i) => (
+    <section className="min-w-0">
+      <h3 className="mb-2 text-sm font-semibold">{title}</h3>
+      <AdminTable caption={title} head={head.map((h) => ({ label: h }))} empty="Aucune donnée.">
+        {rows.length === 0
+          ? undefined
+          : rows.map((r, i) => (
               <tr key={i} className="border-t">
                 {r.map((c, j) => (
-                  <td key={j} className="px-3 py-2">
+                  <td key={j} className="tabular px-4 py-3">
                     {c}
                   </td>
                 ))}
               </tr>
             ))}
-          </tbody>
-        </table>
-      </div>
+      </AdminTable>
     </section>
   );
 }

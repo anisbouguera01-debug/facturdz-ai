@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { H2, Legal, P, UL } from "@/components/legal/legal-ui";
+import { H2, Legal, LegalDocument, P, UL } from "@/components/legal/legal-ui";
 
 export const metadata: Metadata = { title: "Mentions légales" };
 
 export default function MentionsLegalesPage() {
   return (
-    <article>
-      <h1 className="text-3xl font-semibold tracking-tight">Mentions légales</h1>
-
+    <LegalDocument title="Mentions légales">
       <H2>Éditeur du service</H2>
       <UL>
         <li>
@@ -77,6 +75,6 @@ export default function MentionsLegalesPage() {
         Le service est régi par le droit algérien. Juridiction compétente :{" "}
         <Legal k="jurisdiction" />.
       </P>
-    </article>
+    </LegalDocument>
   );
 }

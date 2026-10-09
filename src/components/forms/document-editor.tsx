@@ -188,7 +188,7 @@ export function DocumentEditor({
       .find(Boolean);
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid gap-6">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-[minmax(0,1fr)] gap-6">
       {formError ? <FormMessage>{formError}</FormMessage> : null}
 
       <section
@@ -449,11 +449,17 @@ export function DocumentEditor({
         </div>
       </section>
 
-      <div className="sticky bottom-0 z-10 -mx-4 grid grid-cols-[1fr_auto] gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:flex sm:flex-wrap sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
-        <Button type="submit" size="lg" disabled={isSubmitting}>
+      <div className="sticky bottom-0 z-10 -mx-4 grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:flex sm:flex-wrap sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+        <Button type="submit" size="lg" className="min-w-0 px-3 sm:px-5" disabled={isSubmitting}>
           {isSubmitting ? "Enregistrement…" : documentId ? cfg.submit.update : cfg.submit.create}
         </Button>
-        <Button type="button" variant="secondary" size="lg" onClick={() => router.back()}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          className="px-3 sm:px-5"
+          onClick={() => router.back()}
+        >
           Annuler
         </Button>
       </div>

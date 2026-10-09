@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { H2, Legal, P, UL } from "@/components/legal/legal-ui";
+import { H2, Legal, LegalDocument, P, UL } from "@/components/legal/legal-ui";
 
 export const metadata: Metadata = { title: "Politique de confidentialité" };
 
 export default function ConfidentialitePage() {
   return (
-    <article>
-      <h1 className="text-3xl font-semibold tracking-tight">Politique de confidentialité</h1>
+    <LegalDocument title="Politique de confidentialité">
       <P>
         Cette page explique quelles données personnelles FacturDZ AI traite, pourquoi, avec qui
         elles sont partagées et comment exercer vos droits. Responsable du traitement pour les
@@ -151,6 +150,6 @@ export default function ConfidentialitePage() {
         </Link>
         .
       </P>
-    </article>
+    </LegalDocument>
   );
 }

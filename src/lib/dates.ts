@@ -41,3 +41,8 @@ export const isoDateSchema = z
     return !Number.isNaN(d.getTime()) && dateToISO(d) === v;
   }, "Date invalide.")
   .refine((v) => v >= "2000-01-01" && v <= "2999-12-31", "Date hors limites.");
+
+/** Nombre de jours entre deux dates AAAA-MM-JJ (positif si `to` est après `from`). */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((isoToDate(to).getTime() - isoToDate(from).getTime()) / 86_400_000);
+}

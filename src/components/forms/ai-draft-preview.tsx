@@ -67,7 +67,12 @@ export function AiDraftPreview({ draft }: { draft: PreviewData }) {
           </p>
         ) : null}
       </div>
-      <div className="overflow-x-auto">
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Lignes proposées"
+        className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <table className="w-full text-sm">
           <thead className="text-left text-muted-foreground">
             <tr>

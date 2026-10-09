@@ -4,6 +4,8 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { PaymentForm } from "@/components/forms/payment-form";
 import { VoidPaymentButton } from "@/components/layout/void-payment-button";
+import { DetailHeader } from "@/components/layout/detail";
+import { PrintButton } from "@/components/layout/print-button";
 import { DocumentView } from "@/components/layout/document-view";
 import { InvoiceActions } from "@/components/layout/invoice-actions";
 import { InvoiceStatusBadge } from "@/components/layout/invoice-status-badge";
@@ -33,64 +35,65 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
   const showPayment = invoice.status !== "DRAFT" && invoice.status !== "CANCELLED";
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8 sm:py-10">
-      <Link href="/invoices" className="text-sm text-muted-foreground hover:text-foreground">
-        Factures
-      </Link>
-      <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          {invoice.invoiceNumber ?? "Brouillon"}
-        </h1>
-        <InvoiceStatusBadge status={invoice.displayStatus} />
-      </div>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Pour{" "}
-        <Link
-          href={`/customers/${invoice.customer.id}`}
-          className="underline-offset-4 hover:underline"
-        >
-          {invoice.customer.name}
-        </Link>
-        {invoice.dueDate && invoice.displayStatus === "OVERDUE"
-          ? `, échéance dépassée (${formatDate(invoice.dueDate)})`
-          : ""}
-        {invoice.quote ? (
+    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8 sm:py-10 print:max-w-none print:p-0">
+      <DetailHeader
+        backHref="/invoices"
+        backLabel="Factures"
+        title={<span className="tabular">{invoice.invoiceNumber ?? "Facture en brouillon"}</span>}
+        badges={<InvoiceStatusBadge status={invoice.displayStatus} />}
+        subtitle={
           <>
-            {" · issue du devis "}
-            {can(context.role, "quotes:read") ? (
-              <Link
-                href={`/quotes/${invoice.quote.id}`}
-                className="tabular font-medium whitespace-nowrap underline-offset-4 hover:underline"
-              >
-                {invoice.quote.number}
-              </Link>
-            ) : (
-              <span className="font-mono">{invoice.quote.number}</span>
-            )}
+            Pour{" "}
+            <Link
+              href={`/customers/${invoice.customer.id}`}
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              {invoice.customer.name}
+            </Link>
+            {invoice.dueDate && invoice.displayStatus === "OVERDUE"
+              ? `, échéance dépassée (${formatDate(invoice.dueDate)})`
+              : ""}
+            {invoice.quote ? (
+              <>
+                {" · issue du devis "}
+                {can(context.role, "quotes:read") ? (
+                  <Link
+                    href={`/quotes/${invoice.quote.id}`}
+                    className="tabular font-medium whitespace-nowrap text-foreground underline-offset-4 hover:underline"
+                  >
+                    {invoice.quote.number}
+                  </Link>
+                ) : (
+                  <span className="tabular">{invoice.quote.number}</span>
+                )}
+              </>
+            ) : null}
           </>
-        ) : null}
-      </p>
+        }
+        actions={
+          <>
+            <PrintButton />
+            <a
+              href={`/invoices/${invoice.id}/pdf`}
+              target="_blank"
+              rel="noopener"
+              className={buttonVariants({ variant: "secondary", size: "sm" })}
+            >
+              <Eye />
+              Voir le PDF
+            </a>
+            <a
+              href={`/invoices/${invoice.id}/pdf?download=1`}
+              className={buttonVariants({ variant: "secondary", size: "sm" })}
+            >
+              <Download />
+              Télécharger le PDF
+            </a>
+          </>
+        }
+      />
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <a
-          href={`/invoices/${invoice.id}/pdf`}
-          target="_blank"
-          rel="noopener"
-          className={buttonVariants({ variant: "secondary", size: "sm" })}
-        >
-          <Eye />
-          Voir le PDF
-        </a>
-        <a
-          href={`/invoices/${invoice.id}/pdf?download=1`}
-          className={buttonVariants({ variant: "secondary", size: "sm" })}
-        >
-          <Download />
-          Télécharger le PDF
-        </a>
-      </div>
-
-      <div className="mt-6">
+      <div className="mt-6 print:hidden">
         <InvoiceActions
           id={invoice.id}
           status={invoice.status}
@@ -103,7 +106,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
       </div>
 
       {showPayment ? (
-        <dl className="mt-6 grid max-w-md grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 rounded-lg bg-muted p-4 text-sm">
+        <dl className="mt-6 grid max-w-md grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 rounded-lg bg-muted p-4 text-sm print:hidden">
           <dt className="text-muted-foreground">Total TTC</dt>
           <dd className="tabular text-right">{formatMoney(invoice.total)}</dd>
           <dt className="text-muted-foreground">Déjà payé</dt>
@@ -114,7 +117,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
       ) : null}
 
       {payments.length > 0 ? (
-        <section aria-labelledby="payments-title" className="mt-8">
+        <section aria-labelledby="payments-title" className="mt-8 print:hidden">
           <h2 id="payments-title" className="text-base font-semibold">
             Paiements
           </h2>
@@ -147,7 +150,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
       ) : null}
 
       {canPay && acceptsPayment ? (
-        <div className="mt-6">
+        <div className="mt-6 print:hidden">
           <PaymentForm
             invoiceId={invoice.id}
             remaining={formatMoney(invoice.remaining)}

@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { H2, Legal, P, UL } from "@/components/legal/legal-ui";
+import { H2, Legal, LegalDocument, P, UL } from "@/components/legal/legal-ui";
 
 export const metadata: Metadata = { title: "Conditions générales d'utilisation" };
 
 export default function CguPage() {
   return (
-    <article>
-      <h1 className="text-3xl font-semibold tracking-tight">
-        Conditions générales d&apos;utilisation
-      </h1>
-
+    <LegalDocument title="Conditions générales d'utilisation">
       <H2>1. Objet</H2>
       <P>
         Les présentes conditions encadrent l&apos;utilisation de FacturDZ AI, service en ligne de
@@ -172,6 +168,6 @@ export default function CguPage() {
         </Link>
         .
       </P>
-    </article>
+    </LegalDocument>
   );
 }

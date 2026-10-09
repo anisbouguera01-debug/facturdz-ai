@@ -114,7 +114,12 @@ export function DocumentView({
         <PartyBlock title="Client" party={customer} />
       </div>
 
-      <div className="mt-8 overflow-x-auto">
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Lignes du document"
+        className="mt-8 overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <table className="w-full min-w-[560px] text-sm">
           <caption className="sr-only">Lignes du document</caption>
           <thead>

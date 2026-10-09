@@ -4,6 +4,7 @@ import {
   FileSignature,
   FileText,
   MessageCircleQuestion,
+  RotateCcw,
   SendHorizontal,
   Sparkles,
 } from "lucide-react";
@@ -66,6 +67,46 @@ interface Source {
   result: unknown;
 }
 
+/**
+ * Mise en forme des réponses longues, sans HTML brut : paragraphes séparés par une ligne vide,
+ * listes à puces (« - », « * », « • ») et listes numérotées (« 1. », « 1) »). Le texte reste du
+ * texte : rien n'est interprété comme du code ou du balisage.
+ */
+function FormattedAnswer({ text }: { text: string }) {
+  const blocks = text
+    .trim()
+    .split(/\n{2,}/)
+    .map((b) => b.split("\n").filter((l) => l.trim() !== ""));
+  return (
+    <div className="grid gap-3 text-sm leading-relaxed">
+      {blocks.map((lines, i) => {
+        const bullets = lines.every((l) => /^\s*[-*•]\s+/.test(l));
+        const numbered = lines.every((l) => /^\s*\d+[.)]\s+/.test(l));
+        if (lines.length > 0 && (bullets || numbered)) {
+          const List = numbered ? "ol" : "ul";
+          return (
+            <List
+              key={i}
+              className={cn("grid gap-1.5 pl-5", numbered ? "list-decimal" : "list-disc")}
+            >
+              {lines.map((l, j) => (
+                <li key={j} className="pl-1 marker:text-muted-foreground">
+                  {l.replace(/^\s*([-*•]|\d+[.)])\s+/, "")}
+                </li>
+              ))}
+            </List>
+          );
+        }
+        return (
+          <p key={i} className="whitespace-pre-line">
+            {lines.join("\n")}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function AssistantAvatar() {
   return (
     <span
@@ -102,25 +143,34 @@ export function AiAssistant({
   const input = useRef<HTMLTextAreaElement>(null);
   const current = MODES.find((m) => m.id === mode)!;
   const ready = !pending && text.trim().length >= 3;
+  // Dernière demande envoyée : permet de réessayer après une erreur sans retaper le texte.
+  const [last, setLast] = useState<{ mode: Mode; text: string } | null>(null);
 
-  const submit = () => {
-    if (!ready) return;
-    const sent = text;
+  const send = (sentMode: Mode, sent: string) => {
+    setLast({ mode: sentMode, text: sent });
     start(async () => {
       setError(null);
       setAnswer(null);
-      setAsked(mode === "question" ? sent : null);
-      if (mode === "question") {
-        const res = await askAssistantAction(sent);
+      setAsked(sentMode === "question" ? sent : null);
+      try {
+        if (sentMode === "question") {
+          const res = await askAssistantAction(sent);
+          if (!res.ok) return setError(res.error.message);
+          setAnswer({ text: res.data.answer, sources: res.data.sources as Source[] });
+          setText("");
+          return;
+        }
+        const res = await proposeDocumentAction(sentMode, sent);
         if (!res.ok) return setError(res.error.message);
-        setAnswer({ text: res.data.answer, sources: res.data.sources as Source[] });
-        setText("");
-        return;
+        router.push(`/ai?draft=${res.data.id}`);
+      } catch {
+        // Réseau coupé, délai dépassé, erreur serveur inattendue : on ne laisse pas l'écran muet.
+        setError("La connexion a échoué. Vérifiez votre réseau puis réessayez.");
       }
-      const res = await proposeDocumentAction(mode, sent);
-      if (!res.ok) return setError(res.error.message);
-      router.push(`/ai?draft=${res.data.id}`);
     });
+  };
+  const submit = () => {
+    if (ready) send(mode, text);
   };
 
   return (
@@ -210,7 +260,7 @@ export function AiAssistant({
           <section aria-label="Réponse" className="animate-fade-in flex items-start gap-3">
             <AssistantAvatar />
             <div className="grid min-w-0 flex-1 gap-3 rounded-2xl rounded-tl-md border bg-card p-4 shadow-card">
-              <p className="text-sm leading-relaxed whitespace-pre-line">{answer.text}</p>
+              <FormattedAnswer text={answer.text} />
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer">Données utilisées pour répondre</summary>
                 <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-muted p-2 whitespace-pre-wrap">
@@ -225,9 +275,24 @@ export function AiAssistant({
         ) : null}
       </div>
 
-      {error ? <FormMessage>{error}</FormMessage> : null}
+      {error ? (
+        <div className="grid gap-2">
+          <FormMessage>{error}</FormMessage>
+          {last && !pending ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-fit"
+              onClick={() => send(last.mode, last.text)}
+            >
+              <RotateCcw />
+              Réessayer
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
-      <div className="rounded-2xl border bg-card p-2 shadow-card focus-within:border-highlight focus-within:ring-2 focus-within:ring-ring/20">
+      <div className="shadow-pop sticky bottom-3 z-10 scroll-mb-4 rounded-2xl border bg-card p-2 focus-within:border-highlight focus-within:ring-2 focus-within:ring-ring/20 sm:static sm:shadow-card">
         <label htmlFor="ai-text" className="sr-only">
           {current.label}
         </label>
@@ -239,6 +304,11 @@ export function AiAssistant({
           maxLength={mode === "question" ? 500 : 1000}
           placeholder={current.placeholder}
           onChange={(e) => setText(e.target.value)}
+          onFocus={(e) => {
+            // Clavier mobile : garde la zone de saisie visible au-dessus du clavier.
+            const el = e.currentTarget;
+            setTimeout(() => el.scrollIntoView({ block: "nearest", behavior: "smooth" }), 250);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
           }}
@@ -249,6 +319,7 @@ export function AiAssistant({
             {mode === "question"
               ? "L'assistant lit vos chiffres, il ne modifie rien."
               : "Rien n'est enregistré avant votre confirmation ; le document reste un brouillon."}
+            <span className="hidden sm:inline"> Ctrl + Entrée pour envoyer.</span>
           </p>
           <Button disabled={!ready} onClick={submit} size="sm" aria-label={current.submit}>
             <SendHorizontal />

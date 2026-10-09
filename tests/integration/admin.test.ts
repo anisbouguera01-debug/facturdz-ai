@@ -233,4 +233,35 @@ describe("vues transversales", () => {
     expect(JSON.stringify(users)).not.toMatch(/password|token/i);
     expect((await listPlans(a, db)).length).toBeGreaterThan(0);
   });
+
+  it("filtre les utilisateurs par statut et les entreprises par abonnement, côté serveur", async () => {
+    const a = await admin();
+    const tag = `FLT${Date.now()}`;
+    const suspended = await db.user.create({
+      data: { email: `${tag}-s@adm.test`, name: tag, status: "SUSPENDED" },
+    });
+    const active = await db.user.create({
+      data: { email: `${tag}-a@adm.test`, name: tag, status: "ACTIVE" },
+    });
+    const susp = await listUsers(a, { q: tag, status: "SUSPENDED" }, db);
+    expect(susp.rows.map((r) => r.id)).toEqual([suspended.id]);
+    const act = await listUsers(a, { q: tag, status: "ACTIVE" }, db);
+    expect(act.rows.map((r) => r.id)).toEqual([active.id]);
+    // Valeur inconnue : pas de filtre.
+    expect((await listUsers(a, { q: tag, status: "N'IMPORTE" }, db)).total).toBe(2);
+
+    const t1 = await createTenantContext("OWNER", `${tag}A`);
+    const t2 = await createTenantContext("OWNER", `${tag}B`);
+    const p = await plan();
+    await setOrganizationSubscription(
+      a,
+      { organizationId: t1.org.id, planCode: p.code, status: "TRIALING" },
+      db,
+    );
+    const trial = await listOrganizations(a, { q: tag, subscription: "TRIALING" }, db);
+    expect(trial.rows.map((r) => r.id)).toEqual([t1.org.id]);
+    const none = await listOrganizations(a, { q: tag, subscription: "NONE" }, db);
+    expect(none.rows.map((r) => r.id)).toEqual([t2.org.id]);
+    expect((await listOrganizations(a, { q: tag, subscription: "bidon" }, db)).total).toBe(2);
+  });
 });

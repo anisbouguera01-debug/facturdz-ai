@@ -77,7 +77,12 @@ export function RevenueChart({ data }: { data: MonthPoint[] }) {
         </ul>
       </figcaption>
 
-      <div className="mt-3 overflow-x-auto">
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Graphique du chiffre d'affaires"
+        className="mt-3 overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <svg
           viewBox={`0 0 ${W} ${H}`}
           role="img"
@@ -168,7 +173,12 @@ export function RevenueChart({ data }: { data: MonthPoint[] }) {
         <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
           Afficher les valeurs en tableau
         </summary>
-        <div className="mt-2 overflow-x-auto">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Valeurs du graphique"
+          className="mt-2 overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <table className="w-full min-w-[420px] text-sm">
             <caption className="sr-only">Facturé et encaissé par mois, en dinars</caption>
             <thead>

@@ -10,6 +10,7 @@ import {
   updatePlanAction,
 } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/dialog";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -49,11 +50,13 @@ const STATUSES = [
 
 export function SubscriptionForm({
   organizationId,
+  organizationName,
   plans,
   planCode,
   status,
 }: {
   organizationId: string;
+  organizationName: string;
   plans: { code: string; name: string }[];
   planCode: string | null;
   status: string | null;
@@ -61,6 +64,15 @@ export function SubscriptionForm({
   const { pending, run, message } = useAdminAction();
   const [plan, setPlan] = useState(planCode ?? plans[0]?.code ?? "");
   const [st, setSt] = useState(status ?? "ACTIVE");
+  const [confirming, setConfirming] = useState(false);
+  const apply = () =>
+    run(() =>
+      setSubscriptionAction({
+        organizationId,
+        planCode: plan,
+        status: st as (typeof STATUSES)[number][0],
+      }),
+    );
   return (
     <div className="grid gap-2">
       <div className="flex flex-wrap gap-2">
@@ -92,48 +104,74 @@ export function SubscriptionForm({
           size="sm"
           disabled={pending}
           onClick={() =>
-            run(() =>
-              setSubscriptionAction({
-                organizationId,
-                planCode: plan,
-                status: st as (typeof STATUSES)[number][0],
-              }),
-            )
+            st === "CANCELLED" && status !== "CANCELLED" ? setConfirming(true) : apply()
           }
         >
           Appliquer
         </Button>
       </div>
       {message}
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={() => {
+          setConfirming(false);
+          apply();
+        }}
+        title="Résilier cet abonnement ?"
+        description={`L'abonnement de « ${organizationName} » passera au statut Résilié. Ce changement est journalisé.`}
+        confirmLabel="Résilier"
+        destructive
+      />
     </div>
   );
 }
 
 export function UserStatusButton({
   userId,
+  userName,
   status,
   disabled,
+  disabledReason,
 }: {
   userId: string;
+  userName: string;
   status: string;
   disabled?: boolean;
+  disabledReason?: string;
 }) {
   const { pending, run, message } = useAdminAction();
+  const [confirming, setConfirming] = useState(false);
   const suspended = status === "SUSPENDED";
+  const toggle = () =>
+    run(() => setUserStatusAction({ userId, status: suspended ? "ACTIVE" : "SUSPENDED" }));
   return (
-    <div className="grid gap-1">
+    <div className="grid justify-items-end gap-1">
       <Button
         size="sm"
         variant={suspended ? "secondary" : "destructive"}
         disabled={pending || disabled}
-        onClick={() => {
-          if (!suspended && !window.confirm("Suspendre ce compte et fermer ses sessions ?")) return;
-          run(() => setUserStatusAction({ userId, status: suspended ? "ACTIVE" : "SUSPENDED" }));
-        }}
+        title={disabled ? disabledReason : undefined}
+        onClick={() => (suspended ? toggle() : setConfirming(true))}
       >
         {suspended ? "Réactiver" : "Suspendre"}
       </Button>
+      {disabled && disabledReason ? (
+        <p className="max-w-56 text-right text-xs text-muted-foreground">{disabledReason}</p>
+      ) : null}
       {message}
+      <ConfirmDialog
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={() => {
+          setConfirming(false);
+          toggle();
+        }}
+        title="Suspendre ce compte ?"
+        description={`« ${userName} » ne pourra plus se connecter et ses sessions seront fermées. Vous pourrez le réactiver à tout moment.`}
+        confirmLabel="Suspendre"
+        destructive
+      />
     </div>
   );
 }
@@ -164,6 +202,9 @@ export function PlanEditor({
   const [name, setName] = useState(plan.name);
   const [price, setPrice] = useState(plan.priceMonthly);
   const [active, setActive] = useState(plan.active);
+  const [confirmingPlan, setConfirmingPlan] = useState(false);
+  const savePlan = () =>
+    run(() => updatePlanAction({ planId: plan.id, name, priceMonthly: price, active }));
   const [limits, setLimits] = useState<Record<string, string>>(
     Object.fromEntries(Object.keys(LIMIT_LABELS).map((k) => [k, plan.limits[k] ?? ""])),
   );
@@ -186,16 +227,26 @@ export function PlanEditor({
         size="sm"
         className="w-fit"
         disabled={pending}
-        onClick={() =>
-          run(() => updatePlanAction({ planId: plan.id, name, priceMonthly: price, active }))
-        }
+        onClick={() => (plan.active && !active ? setConfirmingPlan(true) : savePlan())}
       >
         Enregistrer le plan
       </Button>
+      <ConfirmDialog
+        open={confirmingPlan}
+        onClose={() => setConfirmingPlan(false)}
+        onConfirm={() => {
+          setConfirmingPlan(false);
+          savePlan();
+        }}
+        title="Désactiver ce plan ?"
+        description="Le plan ne sera plus proposé pour de nouveaux abonnements. Les abonnés actuels sont conservés."
+        confirmLabel="Désactiver"
+        destructive
+      />
       <div className="grid gap-2 sm:grid-cols-2">
         {Object.entries(LIMIT_LABELS).map(([key, label]) => (
           <div key={key} className="flex items-center gap-2">
-            <label htmlFor={`${plan.id}-${key}`} className="w-48 shrink-0 text-sm">
+            <label htmlFor={`${plan.id}-${key}`} className="w-36 shrink-0 text-sm sm:w-48">
               {label}
             </label>
             <Input
@@ -208,6 +259,7 @@ export function PlanEditor({
             />
             <Button
               size="sm"
+              aria-label={`Enregistrer la limite : ${label}`}
               variant="secondary"
               disabled={pending}
               onClick={() =>
@@ -220,7 +272,7 @@ export function PlanEditor({
                 )
               }
             >
-              OK
+              Enregistrer
             </Button>
           </div>
         ))}

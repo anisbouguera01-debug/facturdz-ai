@@ -154,16 +154,32 @@ export async function getPlatformOverview(_admin: AdminContext, db: Db = getDb()
 
 const PAGE_SIZE = 20;
 
+/** Valeurs du filtre « abonnement » de la liste des entreprises (en plus de NONE). */
+export const SUBSCRIPTION_FILTERS = ["ACTIVE", "TRIALING", "PAST_DUE", "CANCELLED"] as const;
+
 export async function listOrganizations(
   _admin: AdminContext,
-  input: { page?: number; q?: string },
+  input: { page?: number; q?: string; subscription?: string },
   db: Db = getDb(),
 ) {
   const page = Math.max(1, input.page ?? 1);
   const q = input.q?.trim().slice(0, 100);
-  const where = q
-    ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { slug: { contains: q } }] }
-    : {};
+  // Filtre d'abonnement : « NONE » (sans abonnement) ou un statut connu ; toute autre valeur est ignorée.
+  const sub = input.subscription;
+  const subscriptionWhere =
+    sub === "NONE"
+      ? { subscription: { is: null } }
+      : sub && (SUBSCRIPTION_FILTERS as readonly string[]).includes(sub)
+        ? { subscription: { is: { status: sub as (typeof SUBSCRIPTION_FILTERS)[number] } } }
+        : {};
+  const where = {
+    ...(q
+      ? {
+          OR: [{ name: { contains: q, mode: "insensitive" as const } }, { slug: { contains: q } }],
+        }
+      : {}),
+    ...subscriptionWhere,
+  };
   const monthStart = currentMonthStart();
   const [total, rows] = await Promise.all([
     db.organization.count({ where }),
@@ -208,19 +224,24 @@ export async function listOrganizations(
 
 export async function listUsers(
   _admin: AdminContext,
-  input: { page?: number; q?: string },
+  input: { page?: number; q?: string; status?: string },
   db: Db = getDb(),
 ) {
   const page = Math.max(1, input.page ?? 1);
   const q = input.q?.trim().slice(0, 100);
-  const where = q
-    ? {
-        OR: [
-          { email: { contains: q, mode: "insensitive" as const } },
-          { name: { contains: q, mode: "insensitive" as const } },
-        ],
-      }
-    : {};
+  const where = {
+    ...(q
+      ? {
+          OR: [
+            { email: { contains: q, mode: "insensitive" as const } },
+            { name: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+    ...(input.status === "ACTIVE" || input.status === "SUSPENDED"
+      ? { status: input.status as "ACTIVE" | "SUSPENDED" }
+      : {}),
+  };
   const [total, rows] = await Promise.all([
     db.user.count({ where }),
     db.user.findMany({

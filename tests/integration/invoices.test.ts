@@ -294,6 +294,86 @@ describe("conversion d'un devis accepté", () => {
   });
 });
 
+describe("filtre de période (date d'émission)", () => {
+  it("applique les bornes inclusives côté serveur, avec les presets", async () => {
+    const t = await createTenantContext("OWNER", "PER");
+    await createTaxRate(t.ctx, { label: "TVA", rate: "19" });
+    const a = await draft(t, { issueDate: "2026-01-31" });
+    const b = await draft(t, { issueDate: "2026-02-01" });
+    const c = await draft(t, { issueDate: "2026-02-28" });
+    const d = await draft(t, { issueDate: "2026-03-01" });
+    const ids = async (p: Record<string, string>) =>
+      (await listInvoices(t.ctx, { pageSize: 100, ...p } as never)).items.map((i) => i.id).sort();
+
+    // Bornes incluses : 1er et dernier jour de février.
+    expect(await ids({ period: "custom", from: "2026-02-01", to: "2026-02-28" })).toEqual(
+      [b.id, c.id].sort(),
+    );
+    // Un seul jour.
+    expect(await ids({ period: "custom", from: "2026-02-28", to: "2026-02-28" })).toEqual([c.id]);
+    // Ouvert d'un côté.
+    expect(await ids({ from: "2026-02-28" })).toEqual([c.id, d.id].sort());
+    expect(await ids({ period: "custom", to: "2026-01-31" })).toEqual([a.id]);
+    // Période invalide ou inversée : pas de filtre (la page affiche l'erreur).
+    expect((await ids({ period: "custom", from: "2026-02-30" })).length).toBe(4);
+    expect((await ids({ period: "custom", from: "2026-03-01", to: "2026-02-01" })).length).toBe(4);
+    // Preset inconnu : ignoré.
+    expect((await ids({ period: "hier" })).length).toBe(4);
+  });
+
+  it("« aujourd'hui » et « ce mois » suivent la date du jour à Alger", async () => {
+    const t = await createTenantContext("OWNER", "PER2");
+    await createTaxRate(t.ctx, { label: "TVA", rate: "19" });
+    const now = await draft(t, { issueDate: today });
+    const old = await draft(t, { issueDate: "2020-05-05" });
+    const todayIds = (await listInvoices(t.ctx, { period: "today" })).items.map((i) => i.id);
+    expect(todayIds).toEqual([now.id]);
+    const monthIds = (await listInvoices(t.ctx, { period: "month" })).items.map((i) => i.id);
+    expect(monthIds).toContain(now.id);
+    expect(monthIds).not.toContain(old.id);
+    const lastMonth = (await listInvoices(t.ctx, { period: "last-month" })).items.map((i) => i.id);
+    expect(lastMonth).not.toContain(old.id);
+  });
+
+  it("combine période, statut et client, et la pagination garde le total filtré", async () => {
+    const t = await createTenantContext("OWNER", "PER3");
+    await createTaxRate(t.ctx, { label: "TVA", rate: "19" });
+    for (let i = 1; i <= 6; i++) await draft(t, { issueDate: `2026-04-0${i}` });
+    await draft(t, { issueDate: "2026-05-01" });
+    const r = await listInvoices(t.ctx, {
+      period: "custom",
+      from: "2026-04-01",
+      to: "2026-04-30",
+      status: "DRAFT",
+      customerId: t.customer.id,
+      pageSize: 5,
+    });
+    expect(r.total).toBe(6);
+    expect(r.items).toHaveLength(5);
+    expect(r.pageCount).toBe(2);
+  });
+
+  it("n'expose jamais les factures d'une autre entreprise et respecte les permissions", async () => {
+    const t1 = await createTenantContext("OWNER", "PER4");
+    const t2 = await createTenantContext("OWNER", "PER5");
+    await createTaxRate(t1.ctx, { label: "TVA", rate: "19" });
+    await createTaxRate(t2.ctx, { label: "TVA", rate: "19" });
+    const mine = await draft(t1, { issueDate: "2026-06-15" });
+    const theirs = await draft(t2, { issueDate: "2026-06-15" });
+    const res = await listInvoices(t1.ctx, {
+      period: "custom",
+      from: "2026-06-01",
+      to: "2026-06-30",
+    });
+    expect(res.items.map((i) => i.id)).toEqual([mine.id]);
+    expect(res.items.some((i) => i.id === theirs.id)).toBe(false);
+    // Lecture seule suffisante ; le filtre ne donne accès qu'aux données de l'entreprise.
+    const viewer = withRole(t1.ctx, "VIEWER");
+    const seen = await listInvoices(viewer, { period: "custom", from: "2026-06-01" });
+    expect(seen.items.map((x) => x.id)).toEqual([mine.id]);
+  });
+});
+
 describe("permissions", () => {
   it("VIEWER lit seulement", async () => {
     const viewer = withRole(A.ctx, "VIEWER");

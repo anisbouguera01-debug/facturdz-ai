@@ -49,7 +49,12 @@ export default async function SubscriptionPage() {
         </p>
       ) : null}
 
-      <div className="mt-6 overflow-x-auto rounded-xl border bg-card shadow-card">
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Limites du plan"
+        className="mt-6 overflow-x-auto rounded-xl border bg-card shadow-card outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <table className="w-full text-sm">
           <thead className="text-left text-muted-foreground">
             <tr>

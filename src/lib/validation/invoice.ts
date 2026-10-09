@@ -50,6 +50,10 @@ export const invoiceListSchema = z.object({
     .transform((v) => (v ? v : undefined)),
   status: z.enum(INVOICE_LIST_STATUSES).optional().catch(undefined),
   customerId: z.string().max(64).optional().catch(undefined),
+  /** Période sur la date d'émission (voir src/lib/periods.ts). */
+  period: z.string().max(20).optional().catch(undefined),
+  from: z.string().max(10).optional().catch(undefined),
+  to: z.string().max(10).optional().catch(undefined),
   page: z.coerce.number().int().min(1).max(10_000).optional().catch(undefined).default(1),
   pageSize: z.coerce.number().int().min(5).max(100).optional().catch(undefined).default(25),
 });

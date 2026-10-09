@@ -1,6 +1,7 @@
 import "server-only";
 import { dateToISO, isoToDate, todayISO } from "@/lib/dates";
 import { displayStatus, type InvoiceStatus } from "@/lib/invoice-status";
+import { resolvePeriod } from "@/lib/periods";
 import { idSchema } from "@/lib/validation/common";
 import {
   invoiceListSchema,
@@ -347,8 +348,20 @@ export async function listInvoices(ctx: Ctx, params: InvoiceListParams = {}) {
         : p.status
           ? { status: p.status }
           : {};
+  // Période sur la date d'émission (colonne DATE), bornes inclusives, jour courant en Algérie.
+  const period = resolvePeriod({ period: p.period, from: p.from, to: p.to }, todayISO());
+  const issueDateWhere: Prisma.InvoiceWhereInput =
+    period.from || period.to
+      ? {
+          issueDate: {
+            ...(period.from ? { gte: isoToDate(period.from) } : {}),
+            ...(period.to ? { lte: isoToDate(period.to) } : {}),
+          },
+        }
+      : {};
   const where: Prisma.InvoiceWhereInput = {
     ...statusWhere,
+    ...issueDateWhere,
     ...(p.customerId ? { customerId: p.customerId } : {}),
     ...(p.q
       ? {

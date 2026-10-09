@@ -193,3 +193,43 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Impression : seul le document est imprimé (navigation et boutons masqués par print:hidden).
+ * Aucun montant n'est recalculé : l'écran et le papier montrent les mêmes valeurs stockées.
+ */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  article {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  table {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  dl,
+  footer {
+    break-inside: avoid;
+  }
+  a {
+    text-decoration: none;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

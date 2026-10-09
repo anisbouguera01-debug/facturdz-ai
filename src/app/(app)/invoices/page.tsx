@@ -10,6 +10,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FileText, Search } from "lucide-react";
 import { INVOICE_STATUS_LABELS } from "@/lib/invoice-status";
 import { formatDate, formatMoney } from "@/lib/format";
+import { PERIOD_LABELS, resolvePeriod } from "@/lib/periods";
+import { cn } from "@/lib/utils";
 import { can } from "@/lib/permissions";
 import { INVOICE_LIST_STATUSES } from "@/lib/validation/invoice";
 import { listInvoices } from "@/server/services/invoices";
@@ -26,7 +28,22 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
     q: first(sp.q),
     status: first(sp.status),
     customerId: first(sp.customerId),
+    period: first(sp.period),
+    from: first(sp.from),
+    to: first(sp.to),
     page: first(sp.page),
+  };
+  const period = resolvePeriod(params);
+  const periodActive = Boolean(period.from || period.to);
+  // Les liens des préréglages conservent la recherche, le statut et le client.
+  const presetHref = (preset: string | null) => {
+    const sp2 = new URLSearchParams();
+    if (params.q) sp2.set("q", params.q);
+    if (params.status) sp2.set("status", params.status);
+    if (params.customerId) sp2.set("customerId", params.customerId);
+    if (preset) sp2.set("period", preset);
+    const qs = sp2.toString();
+    return qs ? `/invoices?${qs}` : "/invoices";
   };
   const [result, customers] = await Promise.all([
     listInvoices(context, params as never),
@@ -40,7 +57,9 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
       : Promise.resolve([]),
   ]);
   const canCreate = can(context.role, "invoices:create");
-  const filtered = Boolean(params.q || params.status || params.customerId);
+  const filtered = Boolean(
+    params.q || params.status || params.customerId || periodActive || period.error,
+  );
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
@@ -121,6 +140,69 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
             </Link>
           ) : null}
         </div>
+        {period.preset && params.period && period.preset !== "custom" ? (
+          <input type="hidden" name="period" value={period.preset} />
+        ) : null}
+        <fieldset className="grid gap-2 sm:col-span-full">
+          <legend className="text-sm font-medium">Période (date de la facture)</legend>
+          <div className="flex flex-wrap items-end gap-2">
+            {(["today", "week", "month", "last-month"] as const).map((preset) => {
+              const active = period.preset === preset;
+              return (
+                <Link
+                  key={preset}
+                  href={presetHref(preset)}
+                  aria-current={active ? "true" : undefined}
+                  className={cn(
+                    buttonVariants({ variant: active ? "primary" : "secondary", size: "sm" }),
+                  )}
+                >
+                  {PERIOD_LABELS[preset]}
+                </Link>
+              );
+            })}
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="grid gap-1">
+                <label htmlFor="from" className="text-xs text-muted-foreground">
+                  Du
+                </label>
+                <Input
+                  id="from"
+                  name="from"
+                  type="date"
+                  className="h-9 w-40"
+                  defaultValue={period.preset === "custom" ? (params.from ?? "") : ""}
+                />
+              </div>
+              <div className="grid gap-1">
+                <label htmlFor="to" className="text-xs text-muted-foreground">
+                  Au
+                </label>
+                <Input
+                  id="to"
+                  name="to"
+                  type="date"
+                  className="h-9 w-40"
+                  defaultValue={period.preset === "custom" ? (params.to ?? "") : ""}
+                />
+              </div>
+            </div>
+            {periodActive ? (
+              <span className="pb-2 text-xs text-muted-foreground">
+                {period.preset && period.preset !== "custom"
+                  ? `${PERIOD_LABELS[period.preset]} : `
+                  : ""}
+                {period.from ? formatDate(period.from) : "…"} au{" "}
+                {period.to ? formatDate(period.to) : "…"}
+              </span>
+            ) : null}
+          </div>
+          {period.error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {period.error}
+            </p>
+          ) : null}
+        </fieldset>
       </form>
 
       <section aria-label="Liste des factures" className="mt-6">
@@ -236,7 +318,14 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
       <div className="mt-6">
         <Pagination
           basePath="/invoices"
-          params={{ q: params.q, status: params.status, customerId: params.customerId }}
+          params={{
+            q: params.q,
+            status: params.status,
+            customerId: params.customerId,
+            period: params.period,
+            from: params.from,
+            to: params.to,
+          }}
           page={result.page}
           pageCount={result.pageCount}
           total={result.total}

@@ -46,3 +46,22 @@ describe("pages légales", () => {
     expect(register).toContain("/confidentialite");
   });
 });
+
+describe("sommaire des documents légaux", () => {
+  it("slugify : sans accents ni ponctuation, stable", async () => {
+    const { slugify } = await import("@/components/legal/legal-ui");
+    expect(slugify("4. Responsabilité de l'utilisateur sur ses documents")).toBe(
+      "4-responsabilite-de-l-utilisateur-sur-ses-documents",
+    );
+    expect(slugify("Éditeur du service")).toBe("editeur-du-service");
+    expect(slugify("  Contact  ")).toBe("contact");
+  });
+
+  it("chaque page légale passe par LegalDocument (sommaire généré depuis les <H2>)", () => {
+    for (const p of ["mentions-legales", "cgu", "confidentialite"]) {
+      const src = readFileSync(`src/app/(legal)/${p}/page.tsx`, "utf8");
+      expect(src).toContain("<LegalDocument");
+      expect(src).not.toContain("<article");
+    }
+  });
+});

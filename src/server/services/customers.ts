@@ -1,4 +1,6 @@
 import "server-only";
+import { isoToDate, todayISO } from "@/lib/dates";
+import { quoteDisplayStatus, type QuoteStatus } from "@/lib/quote-status";
 import {
   customerListSchema,
   customerSchema,
@@ -250,4 +252,51 @@ export async function listCustomerInvoices(ctx: Ctx, id: string, take = 10) {
       amountPaid: true,
     },
   });
+}
+
+/**
+ * Factures échues du client : émises ou partiellement payées, échéance dépassée
+ * (jour courant en Algérie). Montant = total − déjà payé, calculé en base.
+ */
+export async function getCustomerOverdue(ctx: Ctx, id: string) {
+  assertPermission(ctx, "invoices:read");
+  const today = isoToDate(todayISO());
+  const agg = await ctx.db.invoice.aggregate({
+    where: {
+      customerId: idSchema.parse(id),
+      status: { in: ["ISSUED", "PARTIALLY_PAID"] },
+      dueDate: { lt: today },
+    },
+    _count: { _all: true },
+    _sum: { total: true, amountPaid: true },
+  });
+  const total = agg._sum.total ?? new Prisma.Decimal(0);
+  const paid = agg._sum.amountPaid ?? new Prisma.Decimal(0);
+  return { count: agg._count._all, amount: total.minus(paid).toFixed(2) };
+}
+
+/** Derniers devis du client (historique de la fiche). */
+export async function listCustomerQuotes(ctx: Ctx, id: string, take = 10) {
+  assertPermission(ctx, "quotes:read");
+  const rows = await ctx.db.quote.findMany({
+    where: { customerId: idSchema.parse(id) },
+    orderBy: [{ issueDate: "desc" }, { createdAt: "desc" }],
+    take,
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      issueDate: true,
+      expiryDate: true,
+      total: true,
+    },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    number: r.number,
+    displayStatus: quoteDisplayStatus(r.status as QuoteStatus, r.expiryDate),
+    issueDate: r.issueDate,
+    expiryDate: r.expiryDate,
+    total: r.total.toFixed(2),
+  }));
 }

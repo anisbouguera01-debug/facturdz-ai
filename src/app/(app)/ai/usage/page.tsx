@@ -94,7 +94,12 @@ export default async function AiUsagePage({ searchParams }: PageProps<"/ai/usage
             Aucune utilisation sur cette période.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-xl border bg-card shadow-card">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Consommation IA"
+            className="mt-3 overflow-x-auto rounded-xl border bg-card shadow-card outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <table className="w-full text-sm">
               <thead className="text-left text-muted-foreground">
                 <tr>

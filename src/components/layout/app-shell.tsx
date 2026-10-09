@@ -128,7 +128,7 @@ export function AppShell({
       {/* Barre latérale (ordinateur) */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r bg-paper py-4 transition-[width] duration-200 lg:flex",
+          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r bg-paper py-4 transition-[width] duration-200 lg:flex print:hidden",
           collapsed ? "w-[76px] px-2" : "w-[264px] px-3",
         )}
       >
@@ -208,7 +208,7 @@ export function AppShell({
       </aside>
 
       {/* Barre supérieure (mobile et tablette) */}
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-background/90 px-4 py-2.5 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-background/90 px-4 py-2.5 backdrop-blur lg:hidden print:hidden">
         <button
           type="button"
           onClick={() => setOpenedOn(pathname)}
@@ -272,7 +272,7 @@ export function AppShell({
 
       <div
         className={cn(
-          "min-w-0 transition-[padding] duration-200",
+          "min-w-0 transition-[padding] duration-200 print:pl-0",
           collapsed ? "lg:pl-[76px]" : "lg:pl-[264px]",
         )}
       >

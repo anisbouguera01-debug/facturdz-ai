@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { PricingForm } from "@/components/admin/admin-forms";
+import { AdminTable } from "@/components/admin/admin-ui";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { requireSuperAdminPage } from "@/server/admin/context";
 import { listPricing } from "@/server/admin/overview";
 
@@ -13,53 +17,49 @@ export default async function AdminPricing() {
   const rows = await listPricing(admin);
   return (
     <main className="grid gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Tarifs des modèles IA</h1>
-      <p className="text-sm text-muted-foreground">
-        Prix par million de jetons, tels que publiés par le fournisseur à la date d&apos;effet.
-        Aucune valeur par défaut : sans tarif, le coût d&apos;un appel reste « inconnu » (jamais 0).
-        Un nouveau tarif clôt le précédent (historique conservé).
-      </p>
-      <section className="rounded-xl border bg-card p-4 shadow-card">
+      <PageHeader
+        title="Tarifs des modèles IA"
+        description="Prix par million de jetons, tels que publiés par le fournisseur à la date d'effet. Aucune valeur par défaut : sans tarif, le coût d'un appel reste « inconnu » (jamais 0). Un nouveau tarif clôt le précédent (historique conservé)."
+      />
+      <Card className="p-4 sm:p-5">
+        <h2 className="mb-3 text-base font-semibold tracking-tight">Ajouter un tarif</h2>
         <PricingForm />
-      </section>
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
-        <table className="w-full text-sm">
-          <thead className="text-left text-muted-foreground">
-            <tr>
-              {["Fournisseur", "Modèle", "Entrée", "Sortie", "Cache", "Devise", "Du", "Au"].map(
-                (h) => (
-                  <th key={h} className="px-3 py-2 font-medium">
-                    {h}
-                  </th>
-                ),
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
+      </Card>
+      <AdminTable
+        caption="Historique des tarifs"
+        head={[
+          { label: "Fournisseur" },
+          { label: "Modèle" },
+          { label: "Entrée", align: "right" },
+          { label: "Sortie", align: "right" },
+          { label: "Cache", align: "right" },
+          { label: "Devise" },
+          { label: "Du" },
+          { label: "Au" },
+        ]}
+        empty="Aucun tarif enregistré."
+      >
+        {rows.length === 0
+          ? undefined
+          : rows.map((r) => (
               <tr key={r.id} className="border-t">
-                <td className="px-3 py-2">{r.provider}</td>
-                <td className="px-3 py-2">{r.model}</td>
-                <td className="px-3 py-2">{r.input}</td>
-                <td className="px-3 py-2">{r.output}</td>
-                <td className="px-3 py-2">{r.cachedInput ?? "—"}</td>
-                <td className="px-3 py-2">{r.currency}</td>
-                <td className="px-3 py-2">{df.format(r.effectiveFrom)}</td>
-                <td className="px-3 py-2">
-                  {r.effectiveTo ? df.format(r.effectiveTo) : "en cours"}
+                <td className="px-4 py-3">{r.provider}</td>
+                <td className="px-4 py-3">{r.model}</td>
+                <td className="tabular px-4 py-3 text-right">{r.input}</td>
+                <td className="tabular px-4 py-3 text-right">{r.output}</td>
+                <td className="tabular px-4 py-3 text-right">{r.cachedInput ?? "—"}</td>
+                <td className="px-4 py-3">{r.currency}</td>
+                <td className="tabular px-4 py-3">{df.format(r.effectiveFrom)}</td>
+                <td className="px-4 py-3">
+                  {r.effectiveTo ? (
+                    <span className="tabular">{df.format(r.effectiveTo)}</span>
+                  ) : (
+                    <Badge tone="success">En cours</Badge>
+                  )}
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-3 text-muted-foreground">
-                  Aucun tarif enregistré.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      </AdminTable>
     </main>
   );
 }

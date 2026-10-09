@@ -262,3 +262,69 @@ test("mobile (iPhone) : menu tactile, navigation et aucun débordement horizonta
   }
   await context.close();
 });
+
+test("factures : le filtre de période change réellement la liste (préréglage et dates)", async ({
+  browser,
+}) => {
+  const { context, page } = await newSession(browser, "owner@demo.facturdz.test");
+  const rows = async () => {
+    await page.waitForLoadState("networkidle");
+    return page.locator("table tbody tr").count();
+  };
+  await page.goto("/invoices");
+  const all = await rows();
+  expect(all).toBeGreaterThan(0);
+
+  await page.getByRole("link", { name: "Ce mois" }).click();
+  await page.waitForURL(/period=month/);
+  await expect(page.getByRole("link", { name: "Ce mois" })).toHaveAttribute("aria-current", "true");
+
+  // Une période lointaine sans facture : état vide, pas de simple filtre visuel.
+  await page.goto("/invoices?period=custom&from=2001-01-01&to=2001-01-31");
+  await expect(page.getByText("Aucune facture ne correspond à ces filtres.")).toBeVisible();
+
+  // Dates invalides : message d'erreur, aucun filtre appliqué.
+  await page.goto("/invoices?period=custom&from=2026-02-30");
+  await expect(page.getByRole("alert").filter({ hasText: "Date invalide" })).toBeVisible();
+  expect(await rows()).toBe(all);
+
+  // Saisie des dates dans le formulaire.
+  await page.goto("/invoices");
+  await page.locator("#from").fill("2001-01-01");
+  await page.locator("#to").fill("2001-01-31");
+  await page.getByRole("button", { name: "Filtrer" }).click();
+  await page.waitForURL(/from=2001-01-01/);
+  await expect(page.getByText("Aucune facture ne correspond à ces filtres.")).toBeVisible();
+  await context.close();
+});
+
+test("impression : seul le document est imprimé (navigation et boutons masqués)", async ({
+  browser,
+}) => {
+  const { context, page } = await newSession(browser, "owner@demo.facturdz.test");
+  await page.goto("/invoices");
+  await page.locator("table tbody a[href^='/invoices/']").first().click();
+  await page.waitForURL(/\/invoices\/[^/]+$/);
+  await expect(page.getByRole("button", { name: "Imprimer" })).toBeVisible();
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("button", { name: "Imprimer" })).toBeHidden();
+  await expect(page.getByRole("navigation", { name: "Navigation principale" })).toBeHidden();
+  await expect(page.getByRole("table", { name: "Lignes du document" })).toBeVisible();
+  await context.close();
+});
+
+test("administration : filtres de statut côté serveur et confirmation avant suspension", async ({
+  browser,
+}) => {
+  const { context, page } = await newSession(browser, "admin@demo.facturdz.test");
+  await page.goto("/admin/users?status=SUSPENDED");
+  await expect(page.getByText("Aucun utilisateur ne correspond.")).toBeVisible();
+  await page.goto("/admin/users?status=ACTIVE");
+  const suspend = page.getByRole("button", { name: "Suspendre" }).first();
+  await suspend.click();
+  const dialog = page.getByRole("dialog", { name: "Suspendre ce compte ?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Annuler" }).click();
+  await expect(dialog).toBeHidden();
+  await context.close();
+});
