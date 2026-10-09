@@ -31,7 +31,7 @@ export default async function AdminUsers({ searchParams }: PageProps<"/admin/use
         {data.rows.map((u) => (
           <li
             key={u.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-card"
           >
             <div>
               <p className="font-medium">

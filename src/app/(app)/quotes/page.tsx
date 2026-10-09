@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { QuoteStatusBadge } from "@/components/layout/quote-status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,24 +27,28 @@ export default async function QuotesPage({ searchParams }: PageProps<"/quotes">)
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Devis</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader
+        title="Devis"
+        description={
+          <>
             {result.total} devis{filtered ? " correspondant aux filtres" : ""}
-          </p>
-        </div>
-        {canWrite ? (
-          <Link href="/quotes/new" className={buttonVariants()}>
-            Nouveau devis
-          </Link>
-        ) : null}
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {canWrite ? (
+              <Link href="/quotes/new" className={buttonVariants()}>
+                Nouveau devis
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
       <form
         method="get"
         role="search"
-        className="mt-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_200px_auto] sm:items-end"
+        className="mt-6 grid gap-3 rounded-xl border bg-card p-3 shadow-card sm:grid-cols-[minmax(0,1fr)_200px_auto] sm:items-end sm:p-4"
       >
         <div className="grid gap-1.5">
           <label htmlFor="q" className="text-sm font-medium">
@@ -84,7 +89,7 @@ export default async function QuotesPage({ searchParams }: PageProps<"/quotes">)
 
       <section aria-label="Liste des devis" className="mt-6">
         {result.items.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-6 py-12 text-center">
+          <div className="rounded-xl border border-dashed bg-card/60 px-6 py-12 text-center">
             <p className="font-medium">
               {filtered
                 ? "Aucun devis ne correspond à ces filtres."
@@ -103,9 +108,9 @@ export default async function QuotesPage({ searchParams }: PageProps<"/quotes">)
           </div>
         ) : (
           <>
-            <div className="hidden overflow-hidden rounded-lg border md:block">
+            <div className="hidden overflow-hidden rounded-xl border bg-card shadow-card md:block">
               <table className="w-full text-sm">
-                <thead className="bg-muted text-left text-muted-foreground">
+                <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-2.5 font-medium">
                       Numéro
@@ -129,28 +134,26 @@ export default async function QuotesPage({ searchParams }: PageProps<"/quotes">)
                 </thead>
                 <tbody>
                   {result.items.map((q) => (
-                    <tr key={q.id} className="border-t hover:bg-muted/50">
+                    <tr key={q.id} className="border-t transition-colors hover:bg-accent/50">
                       <td className="px-4 py-3">
                         <Link
                           href={`/quotes/${q.id}`}
-                          className="font-mono underline-offset-4 hover:underline"
+                          className="tabular font-medium whitespace-nowrap underline-offset-4 hover:underline"
                         >
                           {q.number ?? "Brouillon"}
                         </Link>
                       </td>
                       <td className="px-4 py-3">{q.customer.name}</td>
-                      <td className="px-4 py-3 font-mono text-muted-foreground tabular-nums">
+                      <td className="tabular px-4 py-3 text-muted-foreground">
                         {formatDate(q.issueDate)}
                       </td>
-                      <td className="px-4 py-3 font-mono text-muted-foreground tabular-nums">
+                      <td className="tabular px-4 py-3 text-muted-foreground">
                         {formatDate(q.expiryDate)}
                       </td>
                       <td className="px-4 py-3">
                         <QuoteStatusBadge status={q.displayStatus} />
                       </td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums">
-                        {formatMoney(q.total)}
-                      </td>
+                      <td className="tabular px-4 py-3 text-right">{formatMoney(q.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -161,11 +164,11 @@ export default async function QuotesPage({ searchParams }: PageProps<"/quotes">)
                 <li key={q.id}>
                   <Link
                     href={`/quotes/${q.id}`}
-                    className="block rounded-lg border px-4 py-3 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="block rounded-xl border bg-card px-4 py-3 shadow-card outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span className="font-medium">{q.customer.name}</span>
-                      <span className="font-mono text-sm whitespace-nowrap tabular-nums">
+                      <span className="tabular text-sm whitespace-nowrap">
                         {formatMoney(q.total)}
                       </span>
                     </div>

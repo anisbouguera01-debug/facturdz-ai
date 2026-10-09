@@ -49,7 +49,7 @@ export default async function SubscriptionPage() {
         </p>
       ) : null}
 
-      <div className="mt-6 overflow-x-auto rounded-lg border">
+      <div className="mt-6 overflow-x-auto rounded-xl border bg-card shadow-card">
         <table className="w-full text-sm">
           <thead className="text-left text-muted-foreground">
             <tr>
@@ -66,15 +66,13 @@ export default async function SubscriptionPage() {
                   <th scope="row" className="px-4 py-2 text-left font-normal">
                     {r.label}
                   </th>
-                  <td
-                    className={`px-4 py-2 text-right font-mono tabular-nums ${full ? "text-destructive" : ""}`}
-                  >
+                  <td className={`tabular px-4 py-2 text-right ${full ? "text-destructive" : ""}`}>
                     {r.used === null
                       ? "Non mesuré"
                       : `${nf.format(Number(r.used))}${r.unit ? ` ${r.unit}` : ""}`}
                     {full ? " (atteint)" : ""}
                   </td>
-                  <td className="px-4 py-2 text-right font-mono tabular-nums">
+                  <td className="tabular px-4 py-2 text-right">
                     {r.limit === null
                       ? "Illimité"
                       : `${nf.format(r.limit)}${r.unit ? ` ${r.unit}` : ""}`}

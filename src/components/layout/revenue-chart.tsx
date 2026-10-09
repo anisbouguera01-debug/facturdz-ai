@@ -190,12 +190,8 @@ export function RevenueChart({ data }: { data: MonthPoint[] }) {
                   <th scope="row" className="py-1.5 pr-3 text-left font-normal">
                     {d.label}
                   </th>
-                  <td className="py-1.5 pr-3 text-right font-mono tabular-nums">
-                    {formatAmount(d.invoiced)}
-                  </td>
-                  <td className="py-1.5 text-right font-mono tabular-nums">
-                    {formatAmount(d.collected)}
-                  </td>
+                  <td className="tabular py-1.5 pr-3 text-right">{formatAmount(d.invoiced)}</td>
+                  <td className="tabular py-1.5 text-right">{formatAmount(d.collected)}</td>
                 </tr>
               ))}
             </tbody>

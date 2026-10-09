@@ -14,7 +14,7 @@ const df = new Intl.DateTimeFormat("fr-DZ", {
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-xl border bg-card p-4 shadow-card">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
       {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
@@ -141,7 +141,7 @@ function SimpleTable({ title, head, rows }: { title: string; head: string[]; row
   return (
     <section>
       <h3 className="font-semibold">{title}</h3>
-      <div className="mt-2 overflow-x-auto rounded-lg border">
+      <div className="mt-2 overflow-x-auto rounded-xl border bg-card shadow-card">
         <table className="w-full text-sm">
           <thead className="text-left text-muted-foreground">
             <tr>

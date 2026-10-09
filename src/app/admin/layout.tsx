@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <span className="font-semibold tracking-tight">
-              FacturDZ <span className="text-primary">Admin</span>
+              FacturDZ <span className="text-brand">Admin</span>
             </span>
             <nav aria-label="Administration" className="flex flex-wrap gap-4 text-sm">
               {LINKS.map((l) => (

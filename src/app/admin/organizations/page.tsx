@@ -36,7 +36,7 @@ export default async function AdminOrganizations({
         {data.rows.map((o) => (
           <li
             key={o.id}
-            className="grid gap-3 rounded-lg border bg-card p-4 lg:grid-cols-[1fr_auto]"
+            className="grid gap-3 rounded-xl border bg-card p-4 shadow-card lg:grid-cols-[1fr_auto]"
           >
             <div>
               <p className="font-medium">{o.name}</p>

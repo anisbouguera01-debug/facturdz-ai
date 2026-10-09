@@ -141,7 +141,7 @@ export function ProductForm({
               {...fieldAria("priceHT", errors.priceHT?.message)}
               inputMode="decimal"
               autoComplete="off"
-              className="font-mono tabular-nums"
+              className="tabular"
               {...register("priceHT")}
             />
           </Field>
@@ -159,11 +159,9 @@ export function ProductForm({
           {preview ? (
             <dl className="grid grid-cols-[1fr_auto] gap-y-1">
               <dt className="text-muted-foreground">TVA</dt>
-              <dd className="text-right font-mono tabular-nums">
-                {formatMoney(preview.vat.toFixed(2))}
-              </dd>
+              <dd className="tabular text-right">{formatMoney(preview.vat.toFixed(2))}</dd>
               <dt className="font-medium">Prix unitaire TTC</dt>
-              <dd className="text-right font-mono font-medium tabular-nums">
+              <dd className="tabular text-right font-medium">
                 {formatMoney(preview.ttc.toFixed(2))}
               </dd>
             </dl>

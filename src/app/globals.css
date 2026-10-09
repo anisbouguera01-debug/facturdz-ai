@@ -4,56 +4,66 @@
  * Jetons de design FacturDZ (convention shadcn/ui).
  * Les composants utilisent ces jetons, jamais des couleurs en dur,
  * pour que le thème sombre et une future personnalisation restent triviaux.
+ * Palette : fond bleuté très clair, cartes blanches, bleu nuit (principal), indigo (accent).
  */
 :root {
-  --background: #ffffff;
-  --foreground: #0b1220;
-  --muted: #f3f5f8;
-  --muted-foreground: #5b6578;
+  --background: #f7f8fc;
+  --foreground: #111827;
+  --muted: #eef0f7;
+  --muted-foreground: #576075;
   --card: #ffffff;
-  --card-foreground: #0b1220;
-  --border: #e3e7ee;
-  --input: #d5dbe5;
-  --primary: #0f6b4f;
+  --card-foreground: #111827;
+  --border: #e2e5ef;
+  --input: #cbd1e1;
+  --primary: #172554;
   --primary-foreground: #ffffff;
-  --accent: #e8f3ef;
-  --accent-foreground: #0b4a37;
-  --destructive: #c2382b;
+  --highlight: #4f46e5;
+  --accent: #eef0ff;
+  --accent-foreground: #3730a3;
+  --destructive: #b42318;
   --destructive-foreground: #ffffff;
-  --warning: #b7791f;
-  --success: #15803d;
-  --ring: #0f6b4f;
-  --paper: #f6f7f5;
+  --warning: #9a3f06;
+  --success: #067647;
+  --ring: #4f46e5;
+  --paper: #ffffff;
   --stamp: #3446b8;
+  /* Couleur du « AI » du logo : INCHANGÉE (le logo est conservé à l'identique). */
+  --brand: #0f6b4f;
   /* Graphiques : couleurs validées (écart daltonisme, contraste) en clair et en sombre. */
-  --chart-1: #3446b8;
+  --chart-1: #4338ca;
   --chart-2: #d97706;
-  --radius: 0.625rem;
+  --radius: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-pop: 0 8px 24px -6px rgb(16 24 40 / 0.14), 0 2px 6px rgb(16 24 40 / 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b1220;
-    --foreground: #e8ecf3;
-    --muted: #141c2c;
-    --muted-foreground: #95a0b4;
-    --card: #10182a;
-    --card-foreground: #e8ecf3;
-    --border: #232e44;
-    --input: #2c3852;
-    --primary: #34b38a;
-    --primary-foreground: #06140f;
-    --accent: #12302a;
-    --accent-foreground: #b9ecd9;
-    --destructive: #ef6b5e;
+    --background: #0a0f1f;
+    --foreground: #e8ecf5;
+    --muted: #161d36;
+    --muted-foreground: #98a2bb;
+    --card: #101730;
+    --card-foreground: #e8ecf5;
+    --border: #232c4a;
+    --input: #303a5c;
+    --primary: #8b93f5;
+    --primary-foreground: #0a0f1f;
+    --highlight: #8b93f5;
+    --accent: #1b2352;
+    --accent-foreground: #c7ccff;
+    --destructive: #f07a6e;
     --destructive-foreground: #1a0603;
-    --warning: #e0a54a;
+    --warning: #e8a64f;
     --success: #4ade80;
-    --ring: #34b38a;
-    --paper: #10182a;
+    --ring: #8b93f5;
+    --paper: #0d1329;
     --stamp: #8fa0ff;
-    --chart-1: #6f84ec;
+    --brand: #34b38a;
+    --chart-1: #8b93f5;
     --chart-2: #c88418;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.5);
   }
 }
 
@@ -68,6 +78,7 @@
   --color-input: var(--input);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-highlight: var(--highlight);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
@@ -75,10 +86,11 @@
   --color-warning: var(--warning);
   --color-success: var(--success);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
   --color-paper: var(--paper);
   --color-stamp: var(--stamp);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -89,9 +101,95 @@
   * {
     border-color: var(--border);
   }
+  html {
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--highlight) 22%, transparent);
+  }
+}
+
+/* Animations utiles et brèves ; désactivées si l'utilisateur le demande. */
+@keyframes fd-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fd-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fd-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes fd-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fd-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fd-fade-in 150ms ease-out;
+  }
+  .animate-pop-in {
+    animation: fd-pop-in 140ms ease-out;
+  }
+  .animate-slide-in-left {
+    animation: fd-slide-in-left 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .animate-sheet-up {
+    animation: fd-sheet-up 180ms ease-out;
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-pop {
+    box-shadow: var(--shadow-pop);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

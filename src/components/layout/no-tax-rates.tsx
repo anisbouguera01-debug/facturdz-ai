@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 /** Affiché quand l'entreprise n'a encore aucun taux de TVA actif. */
 export function NoTaxRates({ canManage }: { canManage: boolean }) {
   return (
-    <div className="rounded-lg border border-dashed px-6 py-10">
+    <div className="rounded-xl border border-dashed bg-card/60 px-6 py-10">
       <p className="font-medium">Aucun taux de TVA n&apos;est configuré pour votre entreprise.</p>
       <p className="mt-1 text-sm text-muted-foreground">
         {canManage

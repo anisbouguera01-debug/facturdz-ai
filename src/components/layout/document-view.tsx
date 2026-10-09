@@ -93,19 +93,17 @@ export function DocumentView({
   const vat = [...byRate.entries()].sort((a, b) => new Money(b[0]).comparedTo(a[0]));
 
   return (
-    <article className="rounded-lg border bg-card p-5 text-card-foreground sm:p-8">
+    <article className="rounded-xl border bg-card p-5 text-card-foreground shadow-card sm:p-8">
       <header className="flex flex-wrap items-start justify-between gap-6">
         <PartyBlock title="Émetteur" party={seller} />
         <div className="text-right">
           <p className="text-xs text-muted-foreground">{title}</p>
-          <p className="font-mono text-lg font-semibold tabular-nums">
-            {number ?? "Brouillon non numéroté"}
-          </p>
+          <p className="tabular text-lg font-semibold">{number ?? "Brouillon non numéroté"}</p>
           <dl className="mt-2 grid grid-cols-[auto_auto] justify-end gap-x-3 text-sm">
             {dates.map(([label, d]) => (
               <div key={label} className="contents">
                 <dt className="text-muted-foreground">{label}</dt>
-                <dd className="font-mono tabular-nums">{formatDate(d)}</dd>
+                <dd className="tabular">{formatDate(d)}</dd>
               </div>
             ))}
           </dl>
@@ -147,12 +145,8 @@ export function DocumentView({
             {items.map((it) => (
               <tr key={it.id} className="border-b border-dashed align-top">
                 <td className="py-2.5 pr-3 whitespace-pre-line">{it.description}</td>
-                <td className="py-2.5 pr-3 text-right font-mono tabular-nums">
-                  {qty(it.quantity)}
-                </td>
-                <td className="py-2.5 pr-3 text-right font-mono tabular-nums">
-                  {formatMoney(it.unitPrice)}
-                </td>
+                <td className="tabular py-2.5 pr-3 text-right">{qty(it.quantity)}</td>
+                <td className="tabular py-2.5 pr-3 text-right">{formatMoney(it.unitPrice)}</td>
                 {hasDiscount ? (
                   <td className="py-2.5 pr-3 text-right text-muted-foreground">
                     {new Money(it.discountRate).gt(0) ? formatRate(it.discountRate) : "—"}
@@ -161,9 +155,7 @@ export function DocumentView({
                 <td className="py-2.5 pr-3 text-right text-muted-foreground">
                   {formatRate(it.vatRate)}
                 </td>
-                <td className="py-2.5 text-right font-mono tabular-nums">
-                  {formatMoney(it.subtotal)}
-                </td>
+                <td className="tabular py-2.5 text-right">{formatMoney(it.subtotal)}</td>
               </tr>
             ))}
           </tbody>
@@ -175,23 +167,21 @@ export function DocumentView({
           {new Money(totals.discountTotal).gt(0) ? (
             <>
               <dt className="text-muted-foreground">dont remises</dt>
-              <dd className="text-right font-mono tabular-nums">
-                {formatMoney(totals.discountTotal)}
-              </dd>
+              <dd className="tabular text-right">{formatMoney(totals.discountTotal)}</dd>
             </>
           ) : null}
           <dt className="text-muted-foreground">Total HT</dt>
-          <dd className="text-right font-mono tabular-nums">{formatMoney(totals.subtotal)}</dd>
+          <dd className="tabular text-right">{formatMoney(totals.subtotal)}</dd>
           {vat.map(([rate, v]) => (
             <div key={rate} className="contents">
               <dt className="text-muted-foreground">
                 TVA {formatRate(rate)} sur {formatMoney(v.base.toFixed(2))}
               </dt>
-              <dd className="text-right font-mono tabular-nums">{formatMoney(v.tax.toFixed(2))}</dd>
+              <dd className="tabular text-right">{formatMoney(v.tax.toFixed(2))}</dd>
             </div>
           ))}
           <dt className="mt-1 border-t pt-2 text-base font-semibold">Total TTC</dt>
-          <dd className="mt-1 border-t pt-2 text-right font-mono text-base font-semibold tabular-nums">
+          <dd className="tabular mt-1 border-t pt-2 text-right text-base font-semibold">
             {formatMoney(totals.total)}
           </dd>
         </dl>

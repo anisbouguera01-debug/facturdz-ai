@@ -1,25 +1,50 @@
-import Link from "next/link";
-import { AppNav, type NavItem } from "@/components/layout/app-nav";
-import { MobileNav } from "@/components/layout/mobile-nav";
+import { AppShell } from "@/components/layout/app-shell";
+import type { NavItem } from "@/components/layout/app-nav";
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
-import { SignOutButton } from "@/components/layout/sign-out-button";
-import { can, type Permission } from "@/lib/permissions";
+import { can, ROLE_LABELS, type Permission } from "@/lib/permissions";
 import { getCurrentSession } from "@/server/auth/session";
 import { requireTenantPage } from "@/server/tenant/context";
 
-/**
- * Sections disponibles. Chaque phase ajoute la sienne ici
- * (Factures, Devis, Clients, Produits, Paiements, FacturDZ AI, Rapports, Paramètres).
- */
+/** Sections disponibles ; une entrée n'apparaît que si le rôle y a accès. */
 const NAV_ITEMS: (NavItem & { permission?: Permission })[] = [
-  { href: "/dashboard", label: "Tableau de bord" },
-  { href: "/invoices", label: "Factures", permission: "invoices:read" },
-  { href: "/payments", label: "Paiements", permission: "payments:read" },
-  { href: "/quotes", label: "Devis", permission: "quotes:read" },
-  { href: "/customers", label: "Clients", permission: "customers:read" },
-  { href: "/products", label: "Produits", permission: "products:read" },
-  { href: "/ai", label: "FacturDZ AI", permission: "ai:use" },
-  { href: "/settings", label: "Paramètres", permission: "settings:manage" },
+  { href: "/dashboard", label: "Tableau de bord", icon: "dashboard", group: "Gestion" },
+  {
+    href: "/invoices",
+    label: "Factures",
+    icon: "invoices",
+    group: "Gestion",
+    permission: "invoices:read",
+  },
+  { href: "/quotes", label: "Devis", icon: "quotes", group: "Gestion", permission: "quotes:read" },
+  {
+    href: "/payments",
+    label: "Paiements",
+    icon: "payments",
+    group: "Gestion",
+    permission: "payments:read",
+  },
+  {
+    href: "/customers",
+    label: "Clients",
+    icon: "customers",
+    group: "Catalogue",
+    permission: "customers:read",
+  },
+  {
+    href: "/products",
+    label: "Produits et services",
+    icon: "products",
+    group: "Catalogue",
+    permission: "products:read",
+  },
+  { href: "/ai", label: "FacturDZ AI", icon: "ai", group: "Assistant", permission: "ai:use" },
+  {
+    href: "/settings",
+    label: "Paramètres",
+    icon: "settings",
+    group: "Compte",
+    permission: "settings:manage",
+  },
 ];
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -30,57 +55,25 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     role: context.role,
   };
   // Une entrée n'apparaît que si le rôle y a accès (le serveur revérifie de toute façon).
-  const navItems = NAV_ITEMS.filter((i) => !i.permission || can(context.role, i.permission)).map(
-    ({ href, label }) => ({ href, label }),
-  );
+  const navItems: NavItem[] = NAV_ITEMS.filter(
+    (i) => !i.permission || can(context.role, i.permission),
+  ).map(({ href, label, icon, group }) => ({ href, label, icon, group }));
   // Lien d'administration réservé au super admin (le panneau revérifie en base, et répond 404 sinon).
   if ((await getCurrentSession())?.user.platformRole === "SUPER_ADMIN") {
-    navItems.push({ href: "/admin", label: "Administration" });
+    navItems.push({ href: "/admin", label: "Administration", icon: "admin", group: "Compte" });
   }
   const switcher = <OrganizationSwitcher current={current} memberships={memberships} />;
+  const session = await getCurrentSession();
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
-      {/* Barre latérale (ordinateur) */}
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r bg-paper px-3 py-5 lg:flex">
-        <Link href="/dashboard" className="px-3 font-semibold tracking-tight">
-          FacturDZ <span className="text-primary">AI</span>
-        </Link>
-        <div className="mt-6 px-3">{switcher}</div>
-        <div className="mt-6 flex-1">
-          <AppNav items={navItems} />
-        </div>
-        <div className="grid gap-2 px-3">
-          <Link
-            href="/onboarding?nouvelle=1"
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Ajouter une entreprise
-          </Link>
-          <SignOutButton />
-        </div>
-      </aside>
-
-      {/* Barre supérieure (mobile et tablette) */}
-      <header className="relative flex items-center justify-between gap-3 border-b px-4 py-3 lg:hidden">
-        <Link href="/dashboard" className="font-semibold tracking-tight">
-          FacturDZ <span className="text-primary">AI</span>
-        </Link>
-        <MobileNav items={navItems}>
-          {switcher}
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <Link
-              href="/onboarding?nouvelle=1"
-              className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-            >
-              Ajouter une entreprise
-            </Link>
-            <SignOutButton />
-          </div>
-        </MobileNav>
-      </header>
-
-      <div className="min-w-0">{children}</div>
-    </div>
+    <AppShell
+      items={navItems}
+      switcher={switcher}
+      organizationName={context.organizationName}
+      user={{ name: session?.user.name ?? "", email: session?.user.email ?? "" }}
+      roleLabel={ROLE_LABELS[context.role]}
+    >
+      {children}
+    </AppShell>
   );
 }

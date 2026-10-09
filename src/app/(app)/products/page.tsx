@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,27 +33,29 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            {inactive ? "Produits désactivés" : "Produits et services"}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader
+        title={inactive ? "Produits désactivés" : "Produits et services"}
+        description={
+          <>
             {result.total} élément{result.total > 1 ? "s" : ""}
             {filtered ? " correspondant à la recherche" : ""}
-          </p>
-        </div>
-        {canWrite && !inactive ? (
-          <Link href="/products/new" className={buttonVariants()}>
-            Nouveau produit ou service
-          </Link>
-        ) : null}
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {canWrite && !inactive ? (
+              <Link href="/products/new" className={buttonVariants()}>
+                Nouveau produit ou service
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
       <form
         method="get"
         role="search"
-        className="mt-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px_auto] sm:items-end"
+        className="mt-6 grid gap-3 rounded-xl border bg-card p-3 shadow-card sm:grid-cols-[minmax(0,1fr)_180px_auto] sm:items-end sm:p-4"
       >
         {inactive ? <input type="hidden" name="inactive" value="1" /> : null}
         <div className="grid gap-1.5">
@@ -94,7 +97,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
 
       <section aria-label="Catalogue" className="mt-6">
         {result.items.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-6 py-12 text-center">
+          <div className="rounded-xl border border-dashed bg-card/60 px-6 py-12 text-center">
             <p className="font-medium">
               {filtered
                 ? "Aucun élément ne correspond à cette recherche."
@@ -116,9 +119,9 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
           </div>
         ) : (
           <>
-            <div className="hidden overflow-hidden rounded-lg border md:block">
+            <div className="hidden overflow-hidden rounded-xl border bg-card shadow-card md:block">
               <table className="w-full text-sm">
-                <thead className="bg-muted text-left text-muted-foreground">
+                <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-2.5 font-medium">
                       Désignation
@@ -139,7 +142,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
                 </thead>
                 <tbody>
                   {result.items.map((p) => (
-                    <tr key={p.id} className="border-t hover:bg-muted/50">
+                    <tr key={p.id} className="border-t transition-colors hover:bg-accent/50">
                       <td className="px-4 py-3">
                         <Link
                           href={`/products/${p.id}`}
@@ -155,13 +158,11 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.unit ?? "—"}</td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums">
-                        {formatMoney(p.priceHT)}
-                      </td>
+                      <td className="tabular px-4 py-3 text-right">{formatMoney(p.priceHT)}</td>
                       <td className="px-4 py-3 text-right text-muted-foreground">
                         {formatRate(p.vatRate)}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums">
+                      <td className="tabular px-4 py-3 text-right">
                         {formatMoney(ttcFromHt(p.priceHT, p.vatRate).toFixed(2))}
                       </td>
                     </tr>
@@ -174,11 +175,11 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
                 <li key={p.id}>
                   <Link
                     href={`/products/${p.id}`}
-                    className="block rounded-lg border px-4 py-3 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="block rounded-xl border bg-card px-4 py-3 shadow-card outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span className="font-medium">{p.name}</span>
-                      <span className="font-mono text-sm whitespace-nowrap tabular-nums">
+                      <span className="tabular text-sm whitespace-nowrap">
                         {formatMoney(p.priceHT)}
                       </span>
                     </div>

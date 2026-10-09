@@ -233,3 +233,32 @@ test("pages légales : accessibles sans session, avertissement visible, liées d
   }
   expect(bad).toEqual([]);
 });
+
+test("mobile (iPhone) : menu tactile, navigation et aucun débordement horizontal", async ({
+  browser,
+}) => {
+  const saved = sessions.get("owner@demo.facturdz.test");
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    ...(saved ? { storageState: saved } : {}),
+  });
+  const page = await context.newPage();
+  if (!saved) await login(page, "owner@demo.facturdz.test");
+  await page.goto("/dashboard");
+  const overflow = () =>
+    page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+  await page.getByRole("button", { name: "Ouvrir le menu" }).tap();
+  const menu = page.getByRole("dialog", { name: "Menu principal" });
+  await expect(menu).toBeVisible();
+  await menu.getByRole("link", { name: "Factures" }).tap();
+  await page.waitForURL(/\/invoices$/);
+  await expect(menu).toBeHidden();
+  for (const path of ["/dashboard", "/invoices", "/invoices/new", "/customers", "/ai"]) {
+    await page.goto(path);
+    expect(await overflow(), `${path} déborde`).toBeLessThanOrEqual(0);
+  }
+  await context.close();
+});

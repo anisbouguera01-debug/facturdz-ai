@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 const base =
-  "w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 aria-invalid:border-destructive disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm";
+  "w-full rounded-lg border border-input bg-card shadow-card px-3 text-base text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 aria-invalid:border-destructive disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm";
 
 export function Select({ className, ...props }: React.ComponentProps<"select">) {
   return <select className={cn(base, "h-11 pr-8", className)} {...props} />;

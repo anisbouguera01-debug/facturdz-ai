@@ -12,6 +12,7 @@ import { Select, Textarea } from "@/components/ui/select";
 import { computeDocument, lineInputSchema, MAX_LINES, type LineData } from "@/lib/billing";
 import { formatAmount, formatMoney } from "@/lib/format";
 import { formatRate } from "@/lib/money";
+import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -187,10 +188,13 @@ export function DocumentEditor({
       .find(Boolean);
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid gap-8">
+    <form onSubmit={onSubmit} noValidate className="grid gap-6">
       {formError ? <FormMessage>{formError}</FormMessage> : null}
 
-      <section aria-label="En-tête" className="grid gap-5 sm:grid-cols-3">
+      <section
+        aria-label="Informations"
+        className="grid gap-5 rounded-xl border bg-card p-4 shadow-card sm:grid-cols-3 sm:p-5"
+      >
         <div className="grid gap-1.5 sm:col-span-3 lg:col-span-1">
           <label htmlFor="customerId" className="text-sm font-medium">
             Client
@@ -247,7 +251,10 @@ export function DocumentEditor({
         </div>
       </section>
 
-      <section aria-labelledby="lines-title" className="grid gap-3">
+      <section
+        aria-labelledby="lines-title"
+        className="grid gap-3 rounded-xl border bg-card p-4 shadow-card sm:p-5"
+      >
         <div className="flex items-baseline justify-between">
           <h2 id="lines-title" className="text-base font-semibold">
             Lignes
@@ -274,7 +281,7 @@ export function DocumentEditor({
               <li
                 key={field.id}
                 className={cn(
-                  "grid gap-2 rounded-lg border p-3 lg:grid-cols-[minmax(0,1fr)_84px_128px_76px_120px_120px_40px] lg:items-start lg:rounded-none lg:border-0 lg:border-b lg:p-1 lg:pb-3",
+                  "grid gap-2 rounded-xl border bg-card p-3 shadow-card lg:grid-cols-[minmax(0,1fr)_84px_128px_76px_120px_120px_40px] lg:items-start lg:rounded-none lg:border-0 lg:border-b lg:bg-transparent lg:p-1 lg:pb-3 lg:shadow-none",
                   msg && "border-destructive/40",
                 )}
               >
@@ -307,7 +314,7 @@ export function DocumentEditor({
                   <Input
                     id={id("quantity")}
                     inputMode="decimal"
-                    className="font-mono"
+                    className="tabular"
                     {...register(`items.${i}.quantity`)}
                   />
                 </Labeled>
@@ -315,7 +322,7 @@ export function DocumentEditor({
                   <Input
                     id={id("unitPrice")}
                     inputMode="decimal"
-                    className="font-mono"
+                    className="tabular"
                     {...register(`items.${i}.unitPrice`)}
                   />
                 </Labeled>
@@ -324,7 +331,7 @@ export function DocumentEditor({
                     id={id("discountRate")}
                     inputMode="decimal"
                     placeholder="0"
-                    className="font-mono"
+                    className="tabular"
                     {...register(`items.${i}.discountRate`)}
                   />
                 </Labeled>
@@ -339,7 +346,7 @@ export function DocumentEditor({
                 </Labeled>
                 <div className="flex items-center justify-between gap-2 lg:block lg:pt-2.5 lg:text-right">
                   <span className="text-sm text-muted-foreground lg:hidden">Montant HT</span>
-                  <span className="font-mono text-sm tabular-nums">
+                  <span className="tabular text-sm">
                     {preview.lineTotals[i] ? formatAmount(preview.lineTotals[i]) : "—"}
                   </span>
                 </div>
@@ -352,9 +359,7 @@ export function DocumentEditor({
                     className="inline-flex h-9 items-center rounded-md px-2 text-sm text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 lg:mt-1"
                   >
                     <span className="lg:hidden">Supprimer la ligne</span>
-                    <span aria-hidden className="hidden lg:inline">
-                      ✕
-                    </span>
+                    <Trash2 aria-hidden className="hidden size-4 lg:inline" />
                   </button>
                   {i > 0 ? (
                     <button
@@ -383,13 +388,14 @@ export function DocumentEditor({
             disabled={fields.length >= MAX_LINES}
             onClick={() => append(emptyLine())}
           >
+            <Plus />
             Ajouter une ligne
           </Button>
         </div>
       </section>
 
       <section aria-label="Totaux" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="grid gap-5">
+        <div className="grid h-fit gap-5 rounded-xl border bg-card p-4 shadow-card sm:p-5">
           <div className="grid gap-1.5">
             <label htmlFor="notes" className="text-sm font-medium">
               Notes (imprimées sur le document)
@@ -408,43 +414,42 @@ export function DocumentEditor({
             />
           </div>
         </div>
-        <dl
-          aria-live="polite"
-          className="grid h-fit grid-cols-[1fr_auto] gap-x-4 gap-y-2 rounded-lg bg-muted p-4 text-sm"
-        >
-          {preview.totals.discountTotal.gt(0) ? (
-            <>
-              <dt className="text-muted-foreground">Total brut HT</dt>
-              <dd className="text-right font-mono tabular-nums">
-                {formatMoney(preview.totals.grossTotal.toFixed(2))}
-              </dd>
-              <dt className="text-muted-foreground">Remises</dt>
-              <dd className="text-right font-mono tabular-nums">
-                −{formatMoney(preview.totals.discountTotal.toFixed(2))}
-              </dd>
-            </>
-          ) : null}
-          <dt className="text-muted-foreground">Total HT</dt>
-          <dd className="text-right font-mono tabular-nums">
-            {formatMoney(preview.totals.subtotal.toFixed(2))}
-          </dd>
-          {preview.totals.vatBreakdown.map((v) => (
-            <div key={v.rate} className="contents">
-              <dt className="text-muted-foreground">TVA {formatRate(v.rate)}</dt>
-              <dd className="text-right font-mono tabular-nums">{formatMoney(v.tax.toFixed(2))}</dd>
-            </div>
-          ))}
-          <dt className="border-t border-border pt-2 text-base font-semibold">Total TTC</dt>
-          <dd className="border-t border-border pt-2 text-right font-mono text-base font-semibold tabular-nums">
-            {formatMoney(preview.totals.total.toFixed(2))}
-          </dd>
-          <p className="col-span-2 text-xs text-muted-foreground">
+        <div className="grid h-fit gap-3 rounded-xl border bg-card p-4 shadow-card sm:p-5 lg:sticky lg:top-6">
+          <dl aria-live="polite" className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 p-4 text-sm">
+            {preview.totals.discountTotal.gt(0) ? (
+              <>
+                <dt className="text-muted-foreground">Total brut HT</dt>
+                <dd className="tabular text-right">
+                  {formatMoney(preview.totals.grossTotal.toFixed(2))}
+                </dd>
+                <dt className="text-muted-foreground">Remises</dt>
+                <dd className="tabular text-right">
+                  −{formatMoney(preview.totals.discountTotal.toFixed(2))}
+                </dd>
+              </>
+            ) : null}
+            <dt className="text-muted-foreground">Total HT</dt>
+            <dd className="tabular text-right">
+              {formatMoney(preview.totals.subtotal.toFixed(2))}
+            </dd>
+            {preview.totals.vatBreakdown.map((v) => (
+              <div key={v.rate} className="contents">
+                <dt className="text-muted-foreground">TVA {formatRate(v.rate)}</dt>
+                <dd className="tabular text-right">{formatMoney(v.tax.toFixed(2))}</dd>
+              </div>
+            ))}
+            <dt className="border-t border-border pt-3 text-base font-semibold">Total TTC</dt>
+            <dd className="tabular border-t border-border pt-3 text-right text-xl font-semibold text-primary">
+              {formatMoney(preview.totals.total.toFixed(2))}
+            </dd>
+          </dl>
+          <p className="text-xs text-muted-foreground">
             Aperçu ; les montants sont recalculés à l&apos;enregistrement.
           </p>
-        </dl>
+        </div>
       </section>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="sticky bottom-0 z-10 -mx-4 grid grid-cols-[1fr_auto] gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:flex sm:flex-wrap sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
         <Button type="submit" size="lg" disabled={isSubmitting}>
           {isSubmitting ? "Enregistrement…" : documentId ? cfg.submit.update : cfg.submit.create}
         </Button>

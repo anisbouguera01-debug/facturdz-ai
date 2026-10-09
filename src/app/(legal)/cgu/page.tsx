@@ -85,7 +85,10 @@ export default function CguPage() {
         <li>
           Le texte saisi et, pour les questions sur l&apos;activité, les chiffres nécessaires à la
           réponse sont transmis à un prestataire d&apos;intelligence artificielle tiers (voir la{" "}
-          <Link href="/confidentialite" className="text-primary underline-offset-4 hover:underline">
+          <Link
+            href="/confidentialite"
+            className="text-primary underline underline-offset-4 hover:no-underline"
+          >
             politique de confidentialité
           </Link>
           ). Il ne faut pas y saisir d&apos;informations qui ne doivent pas quitter
@@ -161,7 +164,10 @@ export default function CguPage() {
       <H2>Contact</H2>
       <P>
         <Legal k="contactEmail" /> — voir aussi les{" "}
-        <Link href="/mentions-legales" className="text-primary underline-offset-4 hover:underline">
+        <Link
+          href="/mentions-legales"
+          className="text-primary underline underline-offset-4 hover:no-underline"
+        >
           mentions légales
         </Link>
         .

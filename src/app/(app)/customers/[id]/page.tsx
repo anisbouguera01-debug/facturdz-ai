@@ -81,9 +81,9 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
           ["Total payé", formatMoney(stats.totalPaid)],
           ["Reste à payer", formatMoney(stats.totalUnpaid)],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-lg border p-4">
+          <div key={label} className="rounded-xl border bg-card p-4 shadow-card">
             <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="mt-1 font-mono text-lg tabular-nums sm:text-xl">{value}</dd>
+            <dd className="tabular mt-1 text-lg sm:text-xl">{value}</dd>
           </div>
         ))}
       </dl>
@@ -151,11 +151,11 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
               Dernières factures
             </h2>
             {invoices.length === 0 ? (
-              <p className="mt-3 rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+              <p className="mt-3 rounded-xl border border-dashed bg-card/60 px-4 py-8 text-center text-sm text-muted-foreground">
                 Aucune facture pour ce client.
               </p>
             ) : (
-              <ul className="mt-3 divide-y rounded-lg border">
+              <ul className="mt-3 divide-y rounded-xl border bg-card shadow-card">
                 {invoices.map((inv) => {
                   const status = displayStatus(inv.status, inv.dueDate);
                   return (
@@ -168,9 +168,7 @@ export default async function CustomerPage({ params }: PageProps<"/customers/[id
                         <p className="text-muted-foreground">{formatDate(inv.issueDate)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-mono tabular-nums">
-                          {formatMoney(inv.total.toFixed(2))}
-                        </p>
+                        <p className="tabular">{formatMoney(inv.total.toFixed(2))}</p>
                         <Badge
                           tone={
                             status === "OVERDUE"

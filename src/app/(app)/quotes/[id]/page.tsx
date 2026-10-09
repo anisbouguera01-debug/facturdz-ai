@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Download, Eye } from "lucide-react";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import { ConvertQuoteButton } from "@/components/layout/convert-quote-button";
 import { DocumentView } from "@/components/layout/document-view";
 import { QuoteActions } from "@/components/layout/quote-actions";
@@ -26,7 +28,7 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
         Devis
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           {quote.number ?? "Brouillon"}
         </h1>
         <QuoteStatusBadge status={quote.displayStatus} />
@@ -42,22 +44,24 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
         {quote.displayStatus === "EXPIRED" ? ", date de validité dépassée" : ""}
       </p>
 
-      <p className="mt-4 flex flex-wrap gap-4 text-sm">
+      <div className="mt-4 flex flex-wrap gap-2">
         <a
           href={`/quotes/${quote.id}/pdf`}
           target="_blank"
           rel="noopener"
-          className="underline underline-offset-4 hover:text-foreground"
+          className={buttonVariants({ variant: "secondary", size: "sm" })}
         >
+          <Eye />
           Voir le PDF
         </a>
         <a
           href={`/quotes/${quote.id}/pdf?download=1`}
-          className="underline underline-offset-4 hover:text-foreground"
+          className={buttonVariants({ variant: "secondary", size: "sm" })}
         >
+          <Download />
           Télécharger le PDF
         </a>
-      </p>
+      </div>
 
       <div className="mt-6">
         <QuoteActions
@@ -69,7 +73,7 @@ export default async function QuotePage({ params }: PageProps<"/quotes/[id]">) {
       </div>
 
       {quote.status === "ACCEPTED" && can(context.role, "invoices:create") ? (
-        <div className="mt-4 rounded-lg border bg-muted/40 p-4">
+        <div className="mt-4 rounded-xl border bg-card bg-muted/40 p-4 shadow-card">
           <p className="mb-3 text-sm">
             Devis accepté : créez la facture correspondante (brouillon, avec les mêmes lignes).
           </p>

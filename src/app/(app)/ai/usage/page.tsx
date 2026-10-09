@@ -71,9 +71,9 @@ export default async function AiUsagePage({ searchParams }: PageProps<"/ai/usage
           ["Coût estimé", money(u.cost)],
           ["Refusés (limite)", nf.format(u.calls.rejectedLimit)],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-lg border p-4">
+          <div key={label} className="rounded-xl border bg-card p-4 shadow-card">
             <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="mt-1 font-mono text-lg font-semibold tabular-nums">{value}</dd>
+            <dd className="tabular mt-1 text-lg font-semibold">{value}</dd>
           </div>
         ))}
       </dl>
@@ -90,11 +90,11 @@ export default async function AiUsagePage({ searchParams }: PageProps<"/ai/usage
           Par fonctionnalité
         </h2>
         {u.byFeature.length === 0 ? (
-          <p className="mt-3 rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+          <p className="mt-3 rounded-xl border border-dashed bg-card/60 px-4 py-6 text-sm text-muted-foreground">
             Aucune utilisation sur cette période.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-lg border">
+          <div className="mt-3 overflow-x-auto rounded-xl border bg-card shadow-card">
             <table className="w-full text-sm">
               <thead className="text-left text-muted-foreground">
                 <tr>
@@ -108,13 +108,9 @@ export default async function AiUsagePage({ searchParams }: PageProps<"/ai/usage
                 {u.byFeature.map((f) => (
                   <tr key={f.feature}>
                     <td className="px-4 py-2">{FEATURE_LABELS[f.feature] ?? f.feature}</td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums">
-                      {nf.format(f.calls)}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums">
-                      {nf.format(f.tokens)}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums">{money(f.cost)}</td>
+                    <td className="tabular px-4 py-2 text-right">{nf.format(f.calls)}</td>
+                    <td className="tabular px-4 py-2 text-right">{nf.format(f.tokens)}</td>
+                    <td className="tabular px-4 py-2 text-right">{money(f.cost)}</td>
                   </tr>
                 ))}
               </tbody>

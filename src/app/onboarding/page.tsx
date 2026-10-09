@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CreateOrganizationForm } from "@/components/forms/create-organization-form";
@@ -26,7 +27,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
           href={isAdditional ? "/dashboard" : "/onboarding"}
           className="font-semibold tracking-tight"
         >
-          FacturDZ <span className="text-primary">AI</span>
+          <Logo />
         </Link>
         <div className="flex items-center gap-3">
           {user.platformRole === "SUPER_ADMIN" ? (
@@ -50,7 +51,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
                 : "Commencez par l'entreprise qui émettra les factures. Vous en serez le propriétaire et pourrez inviter vos collaborateurs."}
             </p>
           </div>
-          <section className="rounded-lg border bg-card p-5 sm:p-8">
+          <section className="rounded-xl border bg-card p-5 shadow-card sm:p-8">
             <CreateOrganizationForm />
           </section>
         </div>

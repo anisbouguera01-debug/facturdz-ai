@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Logo } from "@/components/ui/logo";
 import Link from "next/link";
 import { LEGAL_LINKS } from "@/components/legal/legal-ui";
 import { InvoiceStub } from "@/components/layout/invoice-stub";
@@ -59,7 +60,7 @@ export function Header({ signedIn }: { signedIn: boolean }) {
     <header className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
         <Link href="/" className="font-semibold tracking-tight">
-          FacturDZ <span className="text-primary">AI</span>
+          <Logo />
         </Link>
         <nav aria-label="Sections" className="hidden gap-6 text-sm md:flex">
           {links.map(([href, label]) => (
@@ -104,9 +105,7 @@ export function Hero({ signedIn }: { signedIn: boolean }) {
     <section className="bg-paper">
       <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 py-16 sm:px-8 sm:py-24 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div>
-          <p className="text-sm font-medium tracking-wide text-primary uppercase">
-            Pour les entreprises algériennes
-          </p>
+          <p className="text-sm font-medium text-highlight">Pour les entreprises algériennes</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
             Facturez plus simplement avec FacturDZ AI.
           </h1>

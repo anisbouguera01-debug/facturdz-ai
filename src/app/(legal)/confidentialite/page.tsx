@@ -139,11 +139,14 @@ export default function ConfidentialitePage() {
       <H2>8. Modifications</H2>
       <P>
         Cette politique peut évoluer ; la version en vigueur est celle de cette page. Voir aussi les{" "}
-        <Link href="/mentions-legales" className="text-primary underline-offset-4 hover:underline">
+        <Link
+          href="/mentions-legales"
+          className="text-primary underline underline-offset-4 hover:no-underline"
+        >
           mentions légales
         </Link>{" "}
         et les{" "}
-        <Link href="/cgu" className="text-primary underline-offset-4 hover:underline">
+        <Link href="/cgu" className="text-primary underline underline-offset-4 hover:no-underline">
           conditions générales
         </Link>
         .

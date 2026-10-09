@@ -54,7 +54,7 @@ export default function MentionsLegalesPage() {
         : l&apos;utilisateur reste responsable de l&apos;exactitude de ses documents, des taux de
         TVA paramétrés et des mentions obligatoires qu&apos;il saisit. Les conditions détaillées
         figurent dans les{" "}
-        <Link href="/cgu" className="text-primary underline-offset-4 hover:underline">
+        <Link href="/cgu" className="text-primary underline underline-offset-4 hover:no-underline">
           conditions générales d&apos;utilisation
         </Link>
         .
@@ -63,7 +63,10 @@ export default function MentionsLegalesPage() {
       <H2>Données personnelles</H2>
       <P>
         Le traitement des données personnelles est décrit dans la{" "}
-        <Link href="/confidentialite" className="text-primary underline-offset-4 hover:underline">
+        <Link
+          href="/confidentialite"
+          className="text-primary underline underline-offset-4 hover:no-underline"
+        >
           politique de confidentialité
         </Link>
         . Pour toute demande : <Legal k="contactEmail" />.

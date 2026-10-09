@@ -39,7 +39,10 @@ export function AiDraftPreview({ draft }: { draft: PreviewData }) {
   const canConfirm = open && draft.blockers.length === 0 && customerId !== "";
 
   return (
-    <section aria-label="Aperçu" className="grid gap-4 rounded-lg border p-4 sm:p-5">
+    <section
+      aria-label="Aperçu"
+      className="grid gap-4 rounded-xl border bg-card p-4 shadow-card sm:p-5"
+    >
       <h2 className="text-lg font-semibold">
         Aperçu {draft.kind === "invoice" ? "de la facture" : "du devis"} (brouillon)
       </h2>
@@ -84,14 +87,12 @@ export function AiDraftPreview({ draft }: { draft: PreviewData }) {
                     <span className="ml-2 text-xs text-muted-foreground">(saisie libre)</span>
                   ) : null}
                 </td>
-                <td className="px-2 text-right font-mono tabular-nums">{l.quantity}</td>
-                <td className="px-2 text-right font-mono tabular-nums">
+                <td className="tabular px-2 text-right">{l.quantity}</td>
+                <td className="tabular px-2 text-right">
                   {l.unitPrice ? formatAmount(l.unitPrice) : "—"}
                 </td>
-                <td className="px-2 text-right font-mono tabular-nums">
-                  {l.vatRate ? `${l.vatRate} %` : "—"}
-                </td>
-                <td className="pl-2 text-right font-mono tabular-nums">
+                <td className="tabular px-2 text-right">{l.vatRate ? `${l.vatRate} %` : "—"}</td>
+                <td className="tabular pl-2 text-right">
                   {l.subtotal ? formatAmount(l.subtotal) : "—"}
                 </td>
               </tr>
@@ -102,17 +103,11 @@ export function AiDraftPreview({ draft }: { draft: PreviewData }) {
       {draft.totals ? (
         <dl className="ml-auto grid w-full max-w-xs grid-cols-2 gap-y-1 text-sm">
           <dt className="text-muted-foreground">Total HT</dt>
-          <dd className="text-right font-mono tabular-nums">
-            {formatMoney(draft.totals.subtotal)}
-          </dd>
+          <dd className="tabular text-right">{formatMoney(draft.totals.subtotal)}</dd>
           <dt className="text-muted-foreground">TVA</dt>
-          <dd className="text-right font-mono tabular-nums">
-            {formatMoney(draft.totals.taxTotal)}
-          </dd>
+          <dd className="tabular text-right">{formatMoney(draft.totals.taxTotal)}</dd>
           <dt className="font-semibold">Total TTC</dt>
-          <dd className="text-right font-mono font-semibold tabular-nums">
-            {formatMoney(draft.totals.total)}
-          </dd>
+          <dd className="tabular text-right font-semibold">{formatMoney(draft.totals.total)}</dd>
         </dl>
       ) : null}
       <p className="text-xs text-muted-foreground">

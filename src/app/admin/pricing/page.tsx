@@ -19,10 +19,10 @@ export default async function AdminPricing() {
         Aucune valeur par défaut : sans tarif, le coût d&apos;un appel reste « inconnu » (jamais 0).
         Un nouveau tarif clôt le précédent (historique conservé).
       </p>
-      <section className="rounded-lg border bg-card p-4">
+      <section className="rounded-xl border bg-card p-4 shadow-card">
         <PricingForm />
       </section>
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
         <table className="w-full text-sm">
           <thead className="text-left text-muted-foreground">
             <tr>

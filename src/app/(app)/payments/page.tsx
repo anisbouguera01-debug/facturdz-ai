@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
@@ -22,17 +23,21 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Paiements</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {result.total} paiement{result.total > 1 ? "s" : ""}
-        {filtered ? " correspondant aux filtres" : ""}. Un paiement s&apos;enregistre depuis la
-        facture concernée.
-      </p>
+      <PageHeader
+        title="Paiements"
+        description={
+          <>
+            {result.total} paiement{result.total > 1 ? "s" : ""}
+            {filtered ? " correspondant aux filtres" : ""}. Un paiement s&apos;enregistre depuis la
+            facture concernée.
+          </>
+        }
+      />
 
       <form
         method="get"
         role="search"
-        className="mt-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_200px_auto] sm:items-end"
+        className="mt-6 grid gap-3 rounded-xl border bg-card p-3 shadow-card sm:grid-cols-[minmax(0,1fr)_200px_auto] sm:items-end sm:p-4"
       >
         <div className="grid gap-1.5">
           <label htmlFor="q" className="text-sm font-medium">
@@ -73,7 +78,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
 
       <section aria-label="Liste des paiements" className="mt-6">
         {result.items.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-6 py-12 text-center">
+          <div className="rounded-xl border border-dashed bg-card/60 px-6 py-12 text-center">
             <p className="font-medium">
               {filtered
                 ? "Aucun paiement ne correspond à ces filtres."
@@ -81,19 +86,17 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
             </p>
           </div>
         ) : (
-          <ul className="divide-y rounded-lg border text-sm">
+          <ul className="divide-y rounded-xl border bg-card text-sm shadow-card">
             {result.items.map((p) => (
               <li
                 key={p.id}
                 className="grid gap-1 px-4 py-3 sm:grid-cols-[110px_1fr_auto] sm:items-center sm:gap-4"
               >
-                <span className="font-mono text-muted-foreground tabular-nums">
-                  {formatDate(p.paymentDate)}
-                </span>
+                <span className="tabular text-muted-foreground">{formatDate(p.paymentDate)}</span>
                 <span>
                   <Link
                     href={`/invoices/${p.invoice.id}`}
-                    className="font-mono underline-offset-4 hover:underline"
+                    className="tabular font-medium whitespace-nowrap underline-offset-4 hover:underline"
                   >
                     {p.invoice.invoiceNumber}
                   </Link>{" "}
@@ -104,7 +107,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
                   ) : null}
                 </span>
                 <span
-                  className={`font-mono tabular-nums sm:text-right ${p.voided ? "text-muted-foreground line-through" : ""}`}
+                  className={`tabular sm:text-right ${p.voided ? "text-muted-foreground line-through" : ""}`}
                 >
                   {formatMoney(p.amount)}
                 </span>

@@ -128,11 +128,11 @@ export function TaxRatesManager({ rates }: { rates: Rate[] }) {
     <div className="grid gap-8">
       {error ? <FormMessage>{error}</FormMessage> : null}
       {rates.length === 0 ? (
-        <p className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed bg-card/60 px-4 py-8 text-center text-sm text-muted-foreground">
           Aucun taux pour l&apos;instant. Ajoutez le premier ci-dessous.
         </p>
       ) : (
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y rounded-xl border bg-card shadow-card">
           {rates.map((r) => (
             <li key={r.id} className="px-4 py-3">
               {editing === r.id ? (
@@ -149,7 +149,7 @@ export function TaxRatesManager({ rates }: { rates: Rate[] }) {
               ) : (
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="w-16 font-mono tabular-nums">{formatRate(r.rate)}</span>
+                    <span className="tabular w-16">{formatRate(r.rate)}</span>
                     <span className={r.active ? "" : "text-muted-foreground line-through"}>
                       {r.label}
                     </span>
@@ -184,7 +184,10 @@ export function TaxRatesManager({ rates }: { rates: Rate[] }) {
         </ul>
       )}
 
-      <section aria-labelledby="add-rate" className="rounded-lg border p-4 sm:p-5">
+      <section
+        aria-labelledby="add-rate"
+        className="rounded-xl border bg-card p-4 shadow-card sm:p-5"
+      >
         <h2 id="add-rate" className="mb-4 text-base font-semibold">
           Ajouter un taux
         </h2>

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AiDraftPreview } from "@/components/forms/ai-draft-preview";
 import { AiAssistant } from "@/components/forms/ai-assistant";
+import { buttonVariants } from "@/components/ui/button";
+import { FormMessage } from "@/components/ui/form-message";
+import { PageHeader } from "@/components/ui/page-header";
 import { Forbidden } from "@/components/layout/forbidden";
 import { can } from "@/lib/permissions";
 import { AppError } from "@/server/errors";
@@ -30,22 +33,21 @@ export default async function AiPage({ searchParams }: PageProps<"/ai">) {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8 sm:py-10">
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">FacturDZ AI</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Décrivez un devis ou une facture, ou posez une question sur votre activité. L&apos;IA
-        propose, le serveur calcule, vous confirmez.
-      </p>
-      {can(context.role, "stats:read") ? (
-        <p className="mt-2 text-sm">
-          <Link href="/ai/usage" className="underline underline-offset-4">
-            Voir la consommation IA
-          </Link>
-        </p>
-      ) : null}
+      <PageHeader
+        title="FacturDZ AI"
+        description="Décrivez un devis ou une facture, ou posez une question sur votre activité. L'IA propose, le serveur calcule, vous confirmez."
+        actions={
+          can(context.role, "stats:read") ? (
+            <Link href="/ai/usage" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+              Voir la consommation IA
+            </Link>
+          ) : undefined
+        }
+      />
       {demo ? (
-        <p className="mt-4 rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">
+        <FormMessage tone="info" className="mt-4 border-dashed">
           Mode démonstration : un assistant simulé répond (aucun fournisseur d&apos;IA connecté).
-        </p>
+        </FormMessage>
       ) : null}
       <div className="mt-6 grid gap-6">
         <AiAssistant

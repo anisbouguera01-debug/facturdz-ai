@@ -18,7 +18,7 @@ export default async function AdminPlans() {
         l&apos;application.
       </p>
       {plans.map((p) => (
-        <section key={p.id} className="rounded-lg border bg-card p-4">
+        <section key={p.id} className="rounded-xl border bg-card p-4 shadow-card">
           <h2 className="mb-3 font-semibold">
             {p.code}{" "}
             <span className="text-sm font-normal text-muted-foreground">

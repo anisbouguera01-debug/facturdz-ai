@@ -28,7 +28,7 @@ export function PaymentForm({
   return (
     <form
       noValidate
-      className="grid gap-4 rounded-lg border p-4"
+      className="grid gap-4 rounded-xl border bg-card p-4 shadow-card"
       onSubmit={(e) => {
         e.preventDefault();
         const form = new FormData(e.currentTarget);

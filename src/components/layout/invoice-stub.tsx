@@ -27,7 +27,7 @@ export function InvoiceStub() {
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Facture</p>
-            <p className="font-mono text-sm tabular-nums">FAC-2026-000128</p>
+            <p className="tabular text-sm">FAC-2026-000128</p>
           </div>
         </div>
 
@@ -49,8 +49,8 @@ export function InvoiceStub() {
             {lines.map((l) => (
               <tr key={l.label} className="border-b border-dashed">
                 <td className="py-2 pr-2">{l.label}</td>
-                <td className="py-2 text-right font-mono tabular-nums">{l.qty}</td>
-                <td className="py-2 text-right font-mono tabular-nums">{l.amount}</td>
+                <td className="tabular py-2 text-right">{l.qty}</td>
+                <td className="tabular py-2 text-right">{l.amount}</td>
               </tr>
             ))}
           </tbody>
@@ -58,11 +58,11 @@ export function InvoiceStub() {
 
         <dl className="mt-4 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-xs">
           <dt className="text-muted-foreground">Total HT</dt>
-          <dd className="text-right font-mono tabular-nums">975 000,00</dd>
+          <dd className="tabular text-right">975 000,00</dd>
           <dt className="text-muted-foreground">TVA 19 %</dt>
-          <dd className="text-right font-mono tabular-nums">185 250,00</dd>
+          <dd className="tabular text-right">185 250,00</dd>
           <dt className="mt-2 border-t pt-2 font-semibold">Total TTC</dt>
-          <dd className="mt-2 border-t pt-2 text-right font-mono text-sm font-semibold tabular-nums">
+          <dd className="tabular mt-2 border-t pt-2 text-right text-sm font-semibold">
             1 160 250,00 DA
           </dd>
         </dl>

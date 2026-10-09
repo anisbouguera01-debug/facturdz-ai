@@ -88,11 +88,11 @@ export default async function ProductPage({ params }: PageProps<"/products/[id]"
           <dt className="text-muted-foreground">Unité</dt>
           <dd>{product.unit ?? "—"}</dd>
           <dt className="text-muted-foreground">Prix HT</dt>
-          <dd className="font-mono tabular-nums">{formatMoney(product.priceHT)}</dd>
+          <dd className="tabular">{formatMoney(product.priceHT)}</dd>
           <dt className="text-muted-foreground">TVA</dt>
           <dd>{formatRate(product.vatRate)}</dd>
           <dt className="text-muted-foreground">Prix TTC</dt>
-          <dd className="font-mono tabular-nums">
+          <dd className="tabular">
             {formatMoney(ttcFromHt(product.priceHT, product.vatRate).toFixed(2))}
           </dd>
           <dt className="text-muted-foreground">Description</dt>

@@ -34,7 +34,7 @@ export default async function NewInvoicePage({ searchParams }: PageProps<"/invoi
         {options.rates.length === 0 ? (
           <NoTaxRates canManage={can(context.role, "settings:manage")} />
         ) : options.customers.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-6 py-10">
+          <div className="rounded-xl border border-dashed bg-card/60 px-6 py-10">
             <p className="font-medium">Aucun client pour l&apos;instant.</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Une facture s&apos;adresse à un client : créez-le d&apos;abord.

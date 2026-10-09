@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Download, Eye } from "lucide-react";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import { PaymentForm } from "@/components/forms/payment-form";
 import { VoidPaymentButton } from "@/components/layout/void-payment-button";
 import { DocumentView } from "@/components/layout/document-view";
@@ -36,7 +38,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         Factures
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           {invoice.invoiceNumber ?? "Brouillon"}
         </h1>
         <InvoiceStatusBadge status={invoice.displayStatus} />
@@ -58,7 +60,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
             {can(context.role, "quotes:read") ? (
               <Link
                 href={`/quotes/${invoice.quote.id}`}
-                className="font-mono underline-offset-4 hover:underline"
+                className="tabular font-medium whitespace-nowrap underline-offset-4 hover:underline"
               >
                 {invoice.quote.number}
               </Link>
@@ -69,22 +71,24 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         ) : null}
       </p>
 
-      <p className="mt-4 flex flex-wrap gap-4 text-sm">
+      <div className="mt-4 flex flex-wrap gap-2">
         <a
           href={`/invoices/${invoice.id}/pdf`}
           target="_blank"
           rel="noopener"
-          className="underline underline-offset-4 hover:text-foreground"
+          className={buttonVariants({ variant: "secondary", size: "sm" })}
         >
+          <Eye />
           Voir le PDF
         </a>
         <a
           href={`/invoices/${invoice.id}/pdf?download=1`}
-          className="underline underline-offset-4 hover:text-foreground"
+          className={buttonVariants({ variant: "secondary", size: "sm" })}
         >
+          <Download />
           Télécharger le PDF
         </a>
-      </p>
+      </div>
 
       <div className="mt-6">
         <InvoiceActions
@@ -101,13 +105,11 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
       {showPayment ? (
         <dl className="mt-6 grid max-w-md grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 rounded-lg bg-muted p-4 text-sm">
           <dt className="text-muted-foreground">Total TTC</dt>
-          <dd className="text-right font-mono tabular-nums">{formatMoney(invoice.total)}</dd>
+          <dd className="tabular text-right">{formatMoney(invoice.total)}</dd>
           <dt className="text-muted-foreground">Déjà payé</dt>
-          <dd className="text-right font-mono tabular-nums">{formatMoney(invoice.amountPaid)}</dd>
+          <dd className="tabular text-right">{formatMoney(invoice.amountPaid)}</dd>
           <dt className="font-semibold">Reste à payer</dt>
-          <dd className="text-right font-mono font-semibold tabular-nums">
-            {formatMoney(invoice.remaining)}
-          </dd>
+          <dd className="tabular text-right font-semibold">{formatMoney(invoice.remaining)}</dd>
         </dl>
       ) : null}
 
@@ -116,14 +118,14 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           <h2 id="payments-title" className="text-base font-semibold">
             Paiements
           </h2>
-          <ul className="mt-3 divide-y rounded-lg border text-sm">
+          <ul className="mt-3 divide-y rounded-xl border bg-card text-sm shadow-card">
             {payments.map((p) => (
               <li
                 key={p.id}
                 className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-start"
               >
                 <div className={p.voided ? "text-muted-foreground line-through" : undefined}>
-                  <span className="font-mono tabular-nums">{formatMoney(p.amount)}</span>
+                  <span className="tabular">{formatMoney(p.amount)}</span>
                   {" · "}
                   {PAYMENT_METHOD_LABELS[p.method]}
                   {" · "}

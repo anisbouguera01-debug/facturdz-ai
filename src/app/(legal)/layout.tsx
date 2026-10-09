@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 import { DraftNotice, LegalNav } from "@/components/legal/legal-ui";
 
 export default function LegalLayout({ children }: LayoutProps<"/">) {
@@ -7,7 +8,7 @@ export default function LegalLayout({ children }: LayoutProps<"/">) {
       <header className="border-b">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
           <Link href="/" className="font-semibold tracking-tight">
-            FacturDZ <span className="text-primary">AI</span>
+            <Logo />
           </Link>
           <Link
             href="/"

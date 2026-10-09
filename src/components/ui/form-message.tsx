@@ -6,7 +6,7 @@ export function FormMessage({
   children,
   className,
 }: {
-  tone?: "error" | "info";
+  tone?: "error" | "info" | "success" | "warning";
   children: React.ReactNode;
   className?: string;
 }) {
@@ -14,10 +14,11 @@ export function FormMessage({
     <div
       role={tone === "error" ? "alert" : "status"}
       className={cn(
-        "rounded-md border px-3 py-2.5 text-sm",
-        tone === "error"
-          ? "border-destructive/30 bg-destructive/5 text-destructive"
-          : "border-border bg-muted text-foreground",
+        "rounded-lg border px-3.5 py-3 text-sm",
+        tone === "error" && "border-destructive/30 bg-destructive/5 text-destructive",
+        tone === "info" && "border-border bg-muted text-foreground",
+        tone === "success" && "border-success/30 bg-success/8 text-success",
+        tone === "warning" && "border-warning/30 bg-warning/10 text-warning",
         className,
       )}
     >

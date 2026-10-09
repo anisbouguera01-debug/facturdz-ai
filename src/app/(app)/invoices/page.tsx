@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { InvoiceStatusBadge } from "@/components/layout/invoice-status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FileText, Search } from "lucide-react";
 import { INVOICE_STATUS_LABELS } from "@/lib/invoice-status";
 import { formatDate, formatMoney } from "@/lib/format";
 import { can } from "@/lib/permissions";
@@ -19,32 +22,51 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 export default async function InvoicesPage({ searchParams }: PageProps<"/invoices">) {
   const { context } = await requireTenantPage("/invoices");
   const sp = await searchParams;
-  const params = { q: first(sp.q), status: first(sp.status), page: first(sp.page) };
-  const result = await listInvoices(context, params as never);
+  const params = {
+    q: first(sp.q),
+    status: first(sp.status),
+    customerId: first(sp.customerId),
+    page: first(sp.page),
+  };
+  const [result, customers] = await Promise.all([
+    listInvoices(context, params as never),
+    can(context.role, "customers:read")
+      ? context.db.customer.findMany({
+          where: { archivedAt: null },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+          take: 300,
+        })
+      : Promise.resolve([]),
+  ]);
   const canCreate = can(context.role, "invoices:create");
-  const filtered = Boolean(params.q || params.status);
+  const filtered = Boolean(params.q || params.status || params.customerId);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Factures</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader
+        title="Factures"
+        description={
+          <>
             {result.total} facture{result.total > 1 ? "s" : ""}
             {filtered ? " correspondant aux filtres" : ""}
-          </p>
-        </div>
-        {canCreate ? (
-          <Link href="/invoices/new" className={buttonVariants()}>
-            Nouvelle facture
-          </Link>
-        ) : null}
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {canCreate ? (
+              <Link href="/invoices/new" className={buttonVariants()}>
+                Nouvelle facture
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
       <form
         method="get"
         role="search"
-        className="mt-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_200px_auto] sm:items-end"
+        className="mt-6 grid gap-3 rounded-xl border bg-card p-3 shadow-card sm:grid-cols-[minmax(0,1fr)_180px_200px_auto] sm:items-end sm:p-4"
       >
         <div className="grid gap-1.5">
           <label htmlFor="q" className="text-sm font-medium">
@@ -71,8 +93,26 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
             ))}
           </Select>
         </div>
+        {customers.length > 0 ? (
+          <div className="grid gap-1.5">
+            <label htmlFor="customerId" className="text-sm font-medium">
+              Client
+            </label>
+            <Select id="customerId" name="customerId" defaultValue={params.customerId ?? ""}>
+              <option value="">Tous</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
         <div className="flex gap-2">
           <button type="submit" className={buttonVariants({ variant: "secondary" })}>
+            <Search />
             Filtrer
           </button>
           {filtered ? (
@@ -85,28 +125,31 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
 
       <section aria-label="Liste des factures" className="mt-6">
         {result.items.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-6 py-12 text-center">
-            <p className="font-medium">
-              {filtered
+          <EmptyState
+            icon={<FileText />}
+            title={
+              filtered
                 ? "Aucune facture ne correspond à ces filtres."
-                : "Aucune facture pour l'instant."}
-            </p>
-            {!filtered && canCreate ? (
-              <>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Créez une facture, ou convertissez un devis accepté.
-                </p>
-                <Link href="/invoices/new" className={`${buttonVariants()} mt-5`}>
+                : "Aucune facture pour l'instant."
+            }
+            description={
+              filtered
+                ? "Modifiez ou effacez les filtres."
+                : "Créez une facture, ou convertissez un devis accepté."
+            }
+            action={
+              !filtered && canCreate ? (
+                <Link href="/invoices/new" className={buttonVariants()}>
                   Créer une facture
                 </Link>
-              </>
-            ) : null}
-          </div>
+              ) : undefined
+            }
+          />
         ) : (
           <>
-            <div className="hidden overflow-hidden rounded-lg border md:block">
+            <div className="hidden overflow-hidden rounded-xl border bg-card shadow-card md:block">
               <table className="w-full text-sm">
-                <thead className="bg-muted text-left text-muted-foreground">
+                <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-2.5 font-medium">
                       Numéro
@@ -133,29 +176,27 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
                 </thead>
                 <tbody>
                   {result.items.map((i) => (
-                    <tr key={i.id} className="border-t hover:bg-muted/50">
+                    <tr key={i.id} className="border-t transition-colors hover:bg-accent/50">
                       <td className="px-4 py-3">
                         <Link
                           href={`/invoices/${i.id}`}
-                          className="font-mono underline-offset-4 hover:underline"
+                          className="tabular font-medium whitespace-nowrap underline-offset-4 hover:underline"
                         >
                           {i.invoiceNumber ?? "Brouillon"}
                         </Link>
                       </td>
                       <td className="px-4 py-3">{i.customer.name}</td>
-                      <td className="px-4 py-3 font-mono text-muted-foreground tabular-nums">
+                      <td className="tabular px-4 py-3 text-muted-foreground">
                         {formatDate(i.issueDate)}
                       </td>
-                      <td className="px-4 py-3 font-mono text-muted-foreground tabular-nums">
+                      <td className="tabular px-4 py-3 text-muted-foreground">
                         {formatDate(i.dueDate)}
                       </td>
                       <td className="px-4 py-3">
                         <InvoiceStatusBadge status={i.displayStatus} />
                       </td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums">
-                        {formatMoney(i.total)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums">
+                      <td className="tabular px-4 py-3 text-right">{formatMoney(i.total)}</td>
+                      <td className="tabular px-4 py-3 text-right">
                         {i.status === "DRAFT" || i.status === "CANCELLED"
                           ? "—"
                           : formatMoney(i.remaining)}
@@ -170,11 +211,11 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
                 <li key={i.id}>
                   <Link
                     href={`/invoices/${i.id}`}
-                    className="block rounded-lg border px-4 py-3 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="block rounded-xl border bg-card px-4 py-3 shadow-card outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span className="font-medium">{i.customer.name}</span>
-                      <span className="font-mono text-sm whitespace-nowrap tabular-nums">
+                      <span className="tabular text-sm whitespace-nowrap">
                         {formatMoney(i.total)}
                       </span>
                     </div>
@@ -195,7 +236,7 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
       <div className="mt-6">
         <Pagination
           basePath="/invoices"
-          params={{ q: params.q, status: params.status }}
+          params={{ q: params.q, status: params.status, customerId: params.customerId }}
           page={result.page}
           pageCount={result.pageCount}
           total={result.total}

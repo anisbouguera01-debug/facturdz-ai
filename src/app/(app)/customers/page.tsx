@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
@@ -30,27 +31,29 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            {archived ? "Clients archivés" : "Clients"}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader
+        title={archived ? "Clients archivés" : "Clients"}
+        description={
+          <>
             {result.total} client{result.total > 1 ? "s" : ""}
             {filtered ? " correspondant à la recherche" : ""}
-          </p>
-        </div>
-        {canWrite && !archived ? (
-          <Link href="/customers/new" className={buttonVariants()}>
-            Nouveau client
-          </Link>
-        ) : null}
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {canWrite && !archived ? (
+              <Link href="/customers/new" className={buttonVariants()}>
+                Nouveau client
+              </Link>
+            ) : null}
+          </>
+        }
+      />
 
       <form
         method="get"
         role="search"
-        className="mt-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px_auto] sm:items-end"
+        className="mt-6 grid gap-3 rounded-xl border bg-card p-3 shadow-card sm:grid-cols-[minmax(0,1fr)_180px_auto] sm:items-end sm:p-4"
       >
         {archived ? <input type="hidden" name="archived" value="1" /> : null}
         <div className="grid gap-1.5">
@@ -92,7 +95,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
 
       <section aria-label="Liste des clients" className="mt-6">
         {result.items.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-6 py-12 text-center">
+          <div className="rounded-xl border border-dashed bg-card/60 px-6 py-12 text-center">
             <p className="font-medium">
               {filtered
                 ? "Aucun client ne correspond à cette recherche."
@@ -116,9 +119,9 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
         ) : (
           <>
             {/* Tableau (tablette et ordinateur) */}
-            <div className="hidden overflow-hidden rounded-lg border md:block">
+            <div className="hidden overflow-hidden rounded-xl border bg-card shadow-card md:block">
               <table className="w-full text-sm">
-                <thead className="bg-muted text-left text-muted-foreground">
+                <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-2.5 font-medium">
                       Client
@@ -136,7 +139,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
                 </thead>
                 <tbody>
                   {result.items.map((c) => (
-                    <tr key={c.id} className="border-t hover:bg-muted/50">
+                    <tr key={c.id} className="border-t transition-colors hover:bg-accent/50">
                       <td className="px-4 py-3">
                         <Link
                           href={`/customers/${c.id}`}
@@ -170,7 +173,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
                 <li key={c.id}>
                   <Link
                     href={`/customers/${c.id}`}
-                    className="block rounded-lg border px-4 py-3 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="block rounded-xl border bg-card px-4 py-3 shadow-card outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span className="font-medium">{c.name}</span>
